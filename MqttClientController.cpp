@@ -127,6 +127,41 @@ public:
   }
 };
 
+class DbgCli_Cmd_MqttClientSub : public DbgCli_Command
+{
+private:
+  MqttClientController* m_mqttClient;
+
+public:
+  DbgCli_Cmd_MqttClientSub(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
+  : DbgCli_Command(mqttClientTopic, "sub", "Subscribe to a topic using MQTT client.")
+  , m_mqttClient(mqttClient)
+  { }
+
+  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
+  {
+    if (argc - idxToFirstArgToHandle != 1)
+    {
+      printUsage();
+    }
+    else
+    {
+      if (0 != m_mqttClient)
+      {
+        int retVal = m_mqttClient->subscribe(args[idxToFirstArgToHandle]);
+        Serial.print("MQTT client, subscribe ");
+        Serial.println(retVal == 1 ? "successful" : "failed");
+      }
+    }
+  }
+
+  void printUsage()
+  {
+    Serial.println(getHelpText());
+    Serial.println("Usage: dbg mqtt sub <topic>");
+  }
+};
+
 //-----------------------------------------------------------------------------
 
 class MqttClientCtrlReconnectTimerAdapter : public TimerAdapter
@@ -147,6 +182,19 @@ public:
 
 //-----------------------------------------------------------------------------
 
+void callback(char* topic, byte* payload, unsigned int length)
+{
+  char msg[length+1];
+  memcpy(msg, payload, length);
+  msg[length] = 0;
+  Serial.print(F("Message arrived ["));
+  Serial.print(topic);
+  Serial.print(F("] "));
+  Serial.println(msg);
+}
+
+//-----------------------------------------------------------------------------
+
 const unsigned long mqttClientCtrlReconnectTimeMillis = 5000;
 
 MqttClientController::MqttClientController(Client* lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
@@ -156,6 +204,7 @@ MqttClientController::MqttClientController(Client* lanClient, const char* mqttSe
 {
   m_pubSubClient->setClient(*(lanClient));
   m_pubSubClient->setServer(mqttServerAddr, mqttPort);
+  m_pubSubClient->setCallback(callback);
 
   //-----------------------------------------------------------------------------
   // MQTT Client Commands
@@ -164,6 +213,7 @@ MqttClientController::MqttClientController(Client* lanClient, const char* mqttSe
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientDis(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientPub(mqttClientTopic, this);
+  new DbgCli_Cmd_MqttClientSub(mqttClientTopic, this);
 }
 
 MqttClientController::~MqttClientController()
@@ -252,4 +302,9 @@ void MqttClientController::loop()
 int MqttClientController::publish(const char* topic, const char* data)
 {
   return m_pubSubClient->publish(topic, data);
+}
+
+int MqttClientController::subscribe(const char* topic)
+{
+  return m_pubSubClient->subscribe(topic);
 }

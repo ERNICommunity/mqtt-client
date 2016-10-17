@@ -27,6 +27,7 @@ public:
   void loop();
 
   int publish(const char* topic, const char* data);
+  int subscribe(const char* topic);
 
 protected:
   void connect();
