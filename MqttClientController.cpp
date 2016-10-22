@@ -19,150 +19,11 @@
 #include <DbgTraceLevel.h>
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
+
+#include <PubSubClientWrapper.h>
+#include <MqttClientDbgCommand.h>
+
 #include <MqttClientController.h>
-
-//-----------------------------------------------------------------------------
-// MQTT Client Dbg Cli Commands
-//-----------------------------------------------------------------------------
-class DbgCli_Cmd_MqttClientCon : public DbgCli_Command
-{
-private:
-  MqttClientController* m_mqttClient;
-
-public:
-  DbgCli_Cmd_MqttClientCon(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
-  : DbgCli_Command(mqttClientTopic, "con", "Connect MQTT client to broker.")
-  , m_mqttClient(mqttClient)
-  { }
-
-  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
-  {
-    if (argc - idxToFirstArgToHandle > 0)
-    {
-      printUsage();
-    }
-    else
-    {
-      if (0 != m_mqttClient)
-      {
-        m_mqttClient->setShallConnect(true);
-        Serial.println("MQTT client connecting to broker now.");
-      }
-    }
-  }
-
-  void printUsage()
-  {
-    Serial.println(getHelpText());
-    Serial.println("Usage: dbg mqtt con");
-  }
-};
-
-class DbgCli_Cmd_MqttClientDis : public DbgCli_Command
-{
-private:
-  MqttClientController* m_mqttClient;
-
-public:
-  DbgCli_Cmd_MqttClientDis(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
-  : DbgCli_Command(mqttClientTopic, "dis", "Disconnect MQTT client from broker.")
-  , m_mqttClient(mqttClient)
-  { }
-
-  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
-  {
-    if (argc - idxToFirstArgToHandle > 0)
-    {
-      printUsage();
-    }
-    else
-    {
-      if (0 != m_mqttClient)
-      {
-        m_mqttClient->setShallConnect(false);
-        Serial.println("MQTT client disconnecting from broker now.");
-      }
-    }
-  }
-
-  void printUsage()
-  {
-    Serial.println(getHelpText());
-    Serial.println("Usage: dbg mqtt dis");
-  }
-};
-
-class DbgCli_Cmd_MqttClientPub : public DbgCli_Command
-{
-private:
-  MqttClientController* m_mqttClient;
-
-public:
-  DbgCli_Cmd_MqttClientPub(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
-  : DbgCli_Command(mqttClientTopic, "pub", "Publish a value to a topic using MQTT client.")
-  , m_mqttClient(mqttClient)
-  { }
-
-  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
-  {
-    if (argc - idxToFirstArgToHandle != 2)
-    {
-      printUsage();
-    }
-    else
-    {
-      if (0 != m_mqttClient)
-      {
-        int retVal = m_mqttClient->publish(args[idxToFirstArgToHandle], args[idxToFirstArgToHandle+1]);
-        Serial.print("MQTT client, publish ");
-        Serial.println(retVal == 1 ? "successful" : "failed");
-      }
-    }
-  }
-
-  void printUsage()
-  {
-    Serial.println(getHelpText());
-    Serial.println("Usage: dbg mqtt pub <topic> <value>");
-  }
-};
-
-class DbgCli_Cmd_MqttClientSub : public DbgCli_Command
-{
-private:
-  MqttClientController* m_mqttClient;
-
-public:
-  DbgCli_Cmd_MqttClientSub(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
-  : DbgCli_Command(mqttClientTopic, "sub", "Subscribe to a topic using MQTT client.")
-  , m_mqttClient(mqttClient)
-  { }
-
-  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
-  {
-    if (argc - idxToFirstArgToHandle != 1)
-    {
-      printUsage();
-    }
-    else
-    {
-      if (0 != m_mqttClient)
-      {
-        int retVal = m_mqttClient->subscribe(args[idxToFirstArgToHandle]);
-        Serial.print("MQTT client, subscribe ");
-        Serial.println(retVal == 1 ? "successful" : "failed");
-      }
-    }
-  }
-
-  void printUsage()
-  {
-    Serial.println(getHelpText());
-    Serial.println("Usage: dbg mqtt sub <topic>");
-  }
-};
-
-//-----------------------------------------------------------------------------
 
 class MqttClientCtrlReconnectTimerAdapter : public TimerAdapter
 {
@@ -182,29 +43,33 @@ public:
 
 //-----------------------------------------------------------------------------
 
-void callback(char* topic, byte* payload, unsigned int length)
+class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
 {
-  char msg[length+1];
-  memcpy(msg, payload, length);
-  msg[length] = 0;
-  Serial.print(F("Message arrived ["));
-  Serial.print(topic);
-  Serial.print(F("] "));
-  Serial.println(msg);
-}
+public:
+  void messageReceived(char* topic, byte* payload, unsigned int length)
+  {
+    char msg[length+1];
+    memcpy(msg, payload, length);
+    msg[length] = 0;
+    Serial.print(F("Message arrived ["));
+    Serial.print(topic);
+    Serial.print(F("] "));
+    Serial.println(msg);
+  }
+};
 
 //-----------------------------------------------------------------------------
 
 const unsigned long mqttClientCtrlReconnectTimeMillis = 5000;
 
 MqttClientController::MqttClientController(Client* lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
-: m_pubSubClient(new PubSubClient())
+: m_mqttClientWrapper(new PubSubClientWrapper())
 , m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
 , m_isConnected(false)
 {
-  m_pubSubClient->setClient(*(lanClient));
-  m_pubSubClient->setServer(mqttServerAddr, mqttPort);
-  m_pubSubClient->setCallback(callback);
+  m_mqttClientWrapper->setClient(lanClient);
+  m_mqttClientWrapper->setServer(mqttServerAddr, mqttPort);
+  m_mqttClientWrapper->setCallbackAdapter(new PubSubClientCallbackAdapter());
 
   //-----------------------------------------------------------------------------
   // MQTT Client Commands
@@ -223,8 +88,8 @@ MqttClientController::~MqttClientController()
   delete m_reconnectTimer;
   m_reconnectTimer = 0;
 
-  delete m_pubSubClient;
-  m_pubSubClient = 0;
+  delete m_mqttClientWrapper;
+  m_mqttClientWrapper = 0;
 }
 
 void MqttClientController::setShallConnect(bool shallConnect)
@@ -236,7 +101,7 @@ void MqttClientController::setShallConnect(bool shallConnect)
   else
   {
     m_reconnectTimer->cancelTimer();
-    m_pubSubClient->disconnect();
+    m_mqttClientWrapper->disconnect();
   }
 }
 
@@ -248,7 +113,7 @@ bool MqttClientController::getShallConnect()
 void MqttClientController::connect()
 {
   const char* mqttClientId = "wiring-iot-skeleton";
-  m_pubSubClient->connect(mqttClientId);
+  m_mqttClientWrapper->connect(mqttClientId);
 }
 
 void MqttClientController::reconnect()
@@ -256,13 +121,13 @@ void MqttClientController::reconnect()
   if (WiFi.isConnected())
   {
     Serial.println("LAN Client is connected");
-    bool newIsConnected = m_pubSubClient->connected();
+    bool newIsConnected = m_mqttClientWrapper->connected();
     if (m_isConnected != newIsConnected)
     {
       // connection state changed
       m_isConnected = newIsConnected;
 
-      int state = m_pubSubClient->state();
+      int state = m_mqttClientWrapper->state();
       Serial.print("MQTT client status: ");
       Serial.println(state == MQTT_CONNECTION_TIMEOUT      ? "CONNECTION_TIMEOUT"      :
                      state == MQTT_CONNECTION_LOST         ? "CONNECTION_LOST"         :
@@ -296,15 +161,15 @@ void MqttClientController::reconnect()
 
 void MqttClientController::loop()
 {
-  m_pubSubClient->loop();
+  m_mqttClientWrapper->processMessages();
 }
 
 int MqttClientController::publish(const char* topic, const char* data)
 {
-  return m_pubSubClient->publish(topic, data);
+  return m_mqttClientWrapper->publish(topic, data);
 }
 
 int MqttClientController::subscribe(const char* topic)
 {
-  return m_pubSubClient->subscribe(topic);
+  return m_mqttClientWrapper->subscribe(topic);
 }

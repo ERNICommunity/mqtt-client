@@ -8,7 +8,8 @@
 #ifndef SRC_MQTTCLIENTCONTROLLER_H_
 #define SRC_MQTTCLIENTCONTROLLER_H_
 
-class PubSubClient;
+class Client;
+class IMqttClientWrapper;
 class Timer;
 
 const unsigned short int defaultMqttPort = 1883;
@@ -34,7 +35,7 @@ protected:
   void reconnect();
 
 private:
-  PubSubClient* m_pubSubClient;
+  IMqttClientWrapper* m_mqttClientWrapper;
   Timer* m_reconnectTimer;
   bool m_isConnected;
 
