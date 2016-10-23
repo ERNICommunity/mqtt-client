@@ -62,14 +62,22 @@ public:
 
 const unsigned long mqttClientCtrlReconnectTimeMillis = 5000;
 
-MqttClientController::MqttClientController(Client* lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
-: m_mqttClientWrapper(new PubSubClientWrapper())
-, m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
+MqttClientController* MqttClientController::s_instance = 0;
+IMqttClientWrapper* MqttClientController::s_mqttClientWrapper = 0;
+
+MqttClientController* MqttClientController::Instance()
+{
+  if (0 == s_instance)
+  {
+    s_instance = new MqttClientController();
+  }
+  return s_instance;
+}
+
+MqttClientController::MqttClientController()
+: m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
 , m_isConnected(false)
 {
-  m_mqttClientWrapper->setClient(lanClient);
-  m_mqttClientWrapper->setServer(mqttServerAddr, mqttPort);
-  m_mqttClientWrapper->setCallbackAdapter(new PubSubClientCallbackAdapter());
 
   //-----------------------------------------------------------------------------
   // MQTT Client Commands
@@ -85,12 +93,19 @@ MqttClientController::~MqttClientController()
 {
   setShallConnect(false);
 
+  delete m_reconnectTimer->adapter();
+  m_reconnectTimer->attachAdapter(0);
+
   delete m_reconnectTimer;
   m_reconnectTimer = 0;
-
-  delete m_mqttClientWrapper;
-  m_mqttClientWrapper = 0;
 }
+
+void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper)
+{
+  s_mqttClientWrapper = mqttClientWrapper;
+  s_mqttClientWrapper->setCallbackAdapter(new PubSubClientCallbackAdapter());
+}
+
 
 void MqttClientController::setShallConnect(bool shallConnect)
 {
@@ -101,7 +116,7 @@ void MqttClientController::setShallConnect(bool shallConnect)
   else
   {
     m_reconnectTimer->cancelTimer();
-    m_mqttClientWrapper->disconnect();
+    s_mqttClientWrapper->disconnect();
   }
 }
 
@@ -113,7 +128,7 @@ bool MqttClientController::getShallConnect()
 void MqttClientController::connect()
 {
   const char* mqttClientId = "wiring-iot-skeleton";
-  m_mqttClientWrapper->connect(mqttClientId);
+  s_mqttClientWrapper->connect(mqttClientId);
 }
 
 void MqttClientController::reconnect()
@@ -121,13 +136,15 @@ void MqttClientController::reconnect()
   if (WiFi.isConnected())
   {
     Serial.println("LAN Client is connected");
-    bool newIsConnected = m_mqttClientWrapper->connected();
+    bool newIsConnected = s_mqttClientWrapper->connected();
     if (m_isConnected != newIsConnected)
     {
       // connection state changed
       m_isConnected = newIsConnected;
 
-      int state = m_mqttClientWrapper->state();
+      delay(5000);
+
+      int state = s_mqttClientWrapper->state();
       Serial.print("MQTT client status: ");
       Serial.println(state == MQTT_CONNECTION_TIMEOUT      ? "CONNECTION_TIMEOUT"      :
                      state == MQTT_CONNECTION_LOST         ? "CONNECTION_LOST"         :
@@ -150,6 +167,7 @@ void MqttClientController::reconnect()
     {
       // not connected, try to re-connect
       Serial.println("MQTT not connected - trying to connect");
+      delay(5000);
       connect();
     }
   }
@@ -161,15 +179,15 @@ void MqttClientController::reconnect()
 
 void MqttClientController::loop()
 {
-  m_mqttClientWrapper->processMessages();
+  s_mqttClientWrapper->processMessages();
 }
 
 int MqttClientController::publish(const char* topic, const char* data)
 {
-  return m_mqttClientWrapper->publish(topic, data);
+  return s_mqttClientWrapper->publish(topic, data);
 }
 
 int MqttClientController::subscribe(const char* topic)
 {
-  return m_mqttClientWrapper->subscribe(topic);
+  return s_mqttClientWrapper->subscribe(topic);
 }

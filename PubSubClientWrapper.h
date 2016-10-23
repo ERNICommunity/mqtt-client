@@ -12,22 +12,22 @@
 
 class PubSubClient;
 
+const unsigned short int defaultMqttPort = 1883;
+
 class PubSubClientWrapper: public IMqttClientWrapper
 {
 public:
-  PubSubClientWrapper();
+  PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort = defaultMqttPort);
   virtual ~PubSubClientWrapper();
 
-  void setClient(Client* lanClient);
-  void setServer(const char* mqttServerAddr, unsigned short int mqttPort) ;
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
   void processMessages();
   bool connect(const char* id);
   void disconnect();
   bool connected();
-  int publish(const char* topic, const char* data);
-  int subscribe(const char* topic);
+  unsigned char publish(const char* topic, const char* data);
+  unsigned char subscribe(const char* topic);
   eIMqttClientState state();
 
 public:
@@ -36,6 +36,11 @@ public:
 private:
   PubSubClient* m_pubSubClient;
   IMqttClientCallbackAdapter* m_callbackAdapter;
+
+private: // forbidden default functions
+  PubSubClientWrapper();                                            // default constructor
+  PubSubClientWrapper& operator = (const PubSubClientWrapper& src); // assignment operator
+  PubSubClientWrapper(const PubSubClientWrapper& src);              // copy constructor
 };
 
 #endif /* LIB_MQTT_CLIENT_PUBSUBCLIENTWRAPPER_H_ */

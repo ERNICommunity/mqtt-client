@@ -11,27 +11,15 @@
 
 PubSubClientWrapper* PubSubClientWrapper::s_pubSubClientWrapper = 0;
 
-PubSubClientWrapper::PubSubClientWrapper()
-: m_pubSubClient(new PubSubClient())
+PubSubClientWrapper::PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
+: m_pubSubClient(new PubSubClient(mqttServerAddr, mqttPort, lanClient))
 , m_callbackAdapter(0)
 {
   s_pubSubClientWrapper = this;
 }
 
 PubSubClientWrapper::~PubSubClientWrapper()
-{
-  // TODO Auto-generated destructor stub
-}
-
-void PubSubClientWrapper::setClient(Client* lanClient)
-{
-  m_pubSubClient->setClient(*(lanClient));
-}
-
-void PubSubClientWrapper::setServer(const char* mqttServerAddr, unsigned short int mqttPort)
-{
-  m_pubSubClient->setServer(mqttServerAddr, mqttPort);
-}
+{ }
 
 void pubSubClientCallback(char* topic, byte* payload, unsigned int length)
 {
@@ -64,7 +52,7 @@ void PubSubClientWrapper::disconnect()
 
 bool PubSubClientWrapper::connected()
 {
-  m_pubSubClient->connected();
+  return m_pubSubClient->connected();
 }
 
 void PubSubClientWrapper::processMessages()
@@ -72,14 +60,14 @@ void PubSubClientWrapper::processMessages()
   m_pubSubClient->loop();
 }
 
-int PubSubClientWrapper::publish(const char* topic, const char* data)
+unsigned char PubSubClientWrapper::publish(const char* topic, const char* data)
 {
   return m_pubSubClient->publish(topic, data);
 }
 
-int PubSubClientWrapper::subscribe(const char* topic)
+unsigned char PubSubClientWrapper::subscribe(const char* topic)
 {
-  m_pubSubClient->subscribe(topic);
+  return m_pubSubClient->subscribe(topic);
 }
 
 IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()

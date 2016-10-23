@@ -28,19 +28,6 @@ public:
   virtual ~IMqttClientWrapper() { }
 
   /**
-   * Set LAN Client.
-   * @param lanClient Pointer to the LAN client object to be used for TCP/IP communication.
-   */
-  virtual void setClient(Client* lanClient) = 0;
-
-  /**
-   * Set MQTT Broker server address and port.
-   * @param mqttServerAddr Server address.
-   * @param mqttPort MQTT port.
-   */
-  virtual void setServer(const char* mqttServerAddr, unsigned short int mqttPort) = 0;
-
-  /**
    * Set callback adapter.
    * @param IMqttClientCallbackAdapter Pointer to an object implementing the interface to the MQTT Client Callback Adapter.
    */
@@ -63,13 +50,13 @@ public:
    * @param topic The MQTT topic to publish to
    * @param data  The data to be published
    */
-  virtual int publish(const char* topic, const char* data) = 0;
+  virtual unsigned char publish(const char* topic, const char* data) = 0;
 
   /**
    * Subscribe the mentioned MQTT Topic.
    * @param topic The MQTT topic to publish to
    */
-  virtual int subscribe(const char* topic) = 0;
+  virtual unsigned char subscribe(const char* topic) = 0;
 
   typedef enum
   {

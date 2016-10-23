@@ -10,17 +10,23 @@
 
 class Client;
 class IMqttClientWrapper;
+class PubSubClientWrapper;
 class Timer;
 
-const unsigned short int defaultMqttPort = 1883;
+//const unsigned short int defaultMqttPort = 1883;
 
 class MqttClientController
 {
   friend class MqttClientCtrlReconnectTimerAdapter;
 
+private:
+  MqttClientController();
 public:
-  MqttClientController(Client* lanClient, const char* mqttServerAddr, unsigned short int mqttPort = defaultMqttPort);
+  static MqttClientController* Instance();
+public:
   virtual ~MqttClientController();
+
+  static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper);
 
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
@@ -35,12 +41,12 @@ protected:
   void reconnect();
 
 private:
-  IMqttClientWrapper* m_mqttClientWrapper;
+  static MqttClientController* s_instance;
+  static IMqttClientWrapper*   s_mqttClientWrapper;
   Timer* m_reconnectTimer;
   bool m_isConnected;
 
 private: // forbidden default functions
-  MqttClientController();                                             // default constructor
   MqttClientController& operator = (const MqttClientController& src); // assignment operator
   MqttClientController(const MqttClientController& src);              // copy constructor
 };
