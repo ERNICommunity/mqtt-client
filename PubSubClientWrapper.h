@@ -28,6 +28,7 @@ public:
   bool connected();
   unsigned char publish(const char* topic, const char* data);
   unsigned char subscribe(const char* topic);
+  unsigned char unsubscribe(const char* topic);
   eIMqttClientState state();
 
 public:

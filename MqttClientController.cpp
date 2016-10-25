@@ -87,6 +87,7 @@ MqttClientController::MqttClientController()
   new DbgCli_Cmd_MqttClientDis(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientPub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientSub(mqttClientTopic, this);
+  new DbgCli_Cmd_MqttClientUnsub(mqttClientTopic, this);
 }
 
 MqttClientController::~MqttClientController()
@@ -191,3 +192,9 @@ int MqttClientController::subscribe(const char* topic)
 {
   return s_mqttClientWrapper->subscribe(topic);
 }
+
+int MqttClientController::unsubscribe(const char* topic)
+{
+  return s_mqttClientWrapper->unsubscribe(topic);
+}
+

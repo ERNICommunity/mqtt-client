@@ -136,5 +136,35 @@ void DbgCli_Cmd_MqttClientSub::printUsage()
 
 //-----------------------------------------------------------------------------
 
+DbgCli_Cmd_MqttClientUnsub::DbgCli_Cmd_MqttClientUnsub(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
+: DbgCli_Command(mqttClientTopic, "unsub", "Unsubscribe a topic using MQTT client.")
+, m_mqttClient(mqttClient)
+{ }
+
+void DbgCli_Cmd_MqttClientUnsub::execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
+{
+  if (argc - idxToFirstArgToHandle != 1)
+  {
+    printUsage();
+  }
+  else
+  {
+    if (0 != m_mqttClient)
+    {
+      int retVal = m_mqttClient->unsubscribe(args[idxToFirstArgToHandle]);
+      Serial.print("MQTT client, unsubscribe ");
+      Serial.println(retVal == 1 ? "successful" : "failed");
+    }
+  }
+}
+
+void DbgCli_Cmd_MqttClientUnsub::printUsage()
+{
+  Serial.println(getHelpText());
+  Serial.println("Usage: dbg mqtt unsub <topic>");
+}
+
+//-----------------------------------------------------------------------------
+
 
 //-----------------------------------------------------------------------------

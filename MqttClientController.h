@@ -35,6 +35,7 @@ public:
 
   int publish(const char* topic, const char* data);
   int subscribe(const char* topic);
+  int unsubscribe(const char* topic);
 
 protected:
   void connect();

@@ -54,9 +54,15 @@ public:
 
   /**
    * Subscribe the mentioned MQTT Topic.
-   * @param topic The MQTT topic to publish to
+   * @param topic The MQTT topic to subscribe from
    */
   virtual unsigned char subscribe(const char* topic) = 0;
+
+  /**
+   * Unsubscribe the mentioned MQTT Topic.
+   * @param topic The MQTT topic to unsubscribe
+   */
+  virtual unsigned char unsubscribe(const char* topic) = 0;
 
   typedef enum
   {

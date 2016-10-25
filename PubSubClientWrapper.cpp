@@ -70,6 +70,11 @@ unsigned char PubSubClientWrapper::subscribe(const char* topic)
   return m_pubSubClient->subscribe(topic);
 }
 
+unsigned char PubSubClientWrapper::unsubscribe(const char* topic)
+{
+  return m_pubSubClient->unsubscribe(topic);
+}
+
 IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
 {
   int pubSubClientState = m_pubSubClient->state();
