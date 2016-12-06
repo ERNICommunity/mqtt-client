@@ -12,8 +12,7 @@ class Client;
 class IMqttClientWrapper;
 class PubSubClientWrapper;
 class Timer;
-
-//const unsigned short int defaultMqttPort = 1883;
+class LanConnectionMonitor;
 
 class MqttClientController
 {
@@ -37,7 +36,6 @@ public:
   int subscribe(const char* topic);
   int unsubscribe(const char* topic);
 
-protected:
   void connect();
   void reconnect();
 
@@ -45,6 +43,9 @@ private:
   static MqttClientController* s_instance;
   static IMqttClientWrapper*   s_mqttClientWrapper;
   Timer* m_reconnectTimer;
+  DbgTrace_Port* m_trPort;
+  LanConnectionMonitor* m_lanConnMon;
+
   bool m_isConnected;
 
 private: // forbidden default functions

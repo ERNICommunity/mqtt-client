@@ -20,6 +20,7 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
+#include <LanConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
 #include <MqttClientDbgCommand.h>
 
@@ -43,6 +44,36 @@ public:
 
 //-----------------------------------------------------------------------------
 
+class MyLanConnMonAdapter : public LanConnMonAdapter
+{
+private:
+  MqttClientController* m_mqttClientCtrl;
+
+public:
+  MyLanConnMonAdapter(MqttClientController* mqttClientCtrl)
+  : LanConnMonAdapter()
+  , m_mqttClientCtrl(mqttClientCtrl)
+  { }
+
+  void notifyLanConnected(bool isLanConnected)
+  {
+    if (isLanConnected)
+    {
+      Serial.println("LAN Connection: ON");
+      if (m_mqttClientCtrl->getShallConnect())
+      {
+        m_mqttClientCtrl->reconnect();
+      }
+    }
+    else
+    {
+      Serial.println("LAN Connection: OFF");
+    }
+  }
+};
+
+//-----------------------------------------------------------------------------
+
 class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
 {
 public:
@@ -55,6 +86,9 @@ public:
     Serial.print(topic);
     Serial.print(F("] "));
     Serial.println(msg);
+
+    bool pinState = atoi(msg);
+    digitalWrite(BUILTIN_LED, pinState);
   }
 };
 
@@ -76,12 +110,9 @@ MqttClientController* MqttClientController::Instance()
 
 MqttClientController::MqttClientController()
 : m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
+, m_lanConnMon(new LanConnectionMonitor(new MyLanConnMonAdapter(this)))
 , m_isConnected(false)
 {
-
-  //-----------------------------------------------------------------------------
-  // MQTT Client Commands
-  //-----------------------------------------------------------------------------
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientDis(mqttClientTopic, this);
@@ -92,6 +123,12 @@ MqttClientController::MqttClientController()
 
 MqttClientController::~MqttClientController()
 {
+  delete m_lanConnMon->adapter();
+  delete m_lanConnMon;
+  m_lanConnMon = 0;
+  delete m_reconnectTimer;
+  m_reconnectTimer = 0;
+
   setShallConnect(false);
 
   delete m_reconnectTimer->adapter();
@@ -134,7 +171,7 @@ void MqttClientController::connect()
 
 void MqttClientController::reconnect()
 {
-  if (WiFi.isConnected())
+  if (m_lanConnMon->isConnected())
   {
     Serial.println("LAN Client is connected");
     bool newIsConnected = s_mqttClientWrapper->connected();
@@ -143,7 +180,7 @@ void MqttClientController::reconnect()
       // connection state changed
       m_isConnected = newIsConnected;
 
-      delay(5000);
+//      delay(5000);
 
       int state = s_mqttClientWrapper->state();
       Serial.print("MQTT client status: ");
@@ -159,6 +196,8 @@ void MqttClientController::reconnect()
                      state == MQTT_CONNECT_UNAUTHORIZED    ? "CONNECT_UNAUTHORIZED"    : "UNKNOWN");
     }
 
+    loop();
+
     if (m_isConnected)
     {
       // connected, subscribe to topics (if not yet done)
@@ -168,7 +207,7 @@ void MqttClientController::reconnect()
     {
       // not connected, try to re-connect
       Serial.println("MQTT not connected - trying to connect");
-      delay(5000);
+//      delay(5000);
       connect();
     }
   }

@@ -17,7 +17,7 @@ public:
   LanConnMonAdapter() { }
   virtual ~LanConnMonAdapter() { }
   virtual bool connectedRaw();
-  virtual void notifyLanConnected(bool isConnected) { }
+  virtual void notifyLanConnected(bool isLanConnected) { }
 
 private:
   // forbidden default functions
@@ -36,6 +36,7 @@ public:
   void evaluateState();
   void changeState(LanConnMonState* newState);
   LanConnMonState* state();
+  const char* getCurrentStateName();
   void startStableConnCheckTimer();
 
 private:
@@ -63,6 +64,7 @@ public:
   virtual void evaluateState(LanConnectionMonitor* monitor) { }
   virtual void timeExpired(LanConnectionMonitor* monitor) { }
   virtual void entry(LanConnectionMonitor* monitor) { }
+  virtual const char* toString() = 0;
 };
 
 //-----------------------------------------------------------------------------
@@ -76,6 +78,8 @@ public:
   static LanConnMonState* Instance();
   virtual ~LanConnMonState_Unconnected() { }
   void evaluateState(LanConnectionMonitor* monitor);
+  void entry(LanConnectionMonitor* monitor);
+  const char* toString();
 
 private:
   static LanConnMonState* s_instance;
@@ -94,6 +98,7 @@ public:
   void evaluateState(LanConnectionMonitor* monitor);
   void timeExpired(LanConnectionMonitor* monitor);
   void entry(LanConnectionMonitor* monitor);
+  const char* toString();
 
 private:
   static LanConnMonState* s_instance;
@@ -110,6 +115,8 @@ public:
   static LanConnMonState* Instance();
   virtual ~LanConnMonState_StableConnection() { }
   void evaluateState(LanConnectionMonitor* monitor);
+  void entry(LanConnectionMonitor* monitor);
+  const char* toString();
 
 private:
   static LanConnMonState* s_instance;
