@@ -119,10 +119,10 @@ MqttClientController::~MqttClientController()
   m_reconnectTimer = 0;
 }
 
-void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper)
+void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter)
 {
   s_mqttClientWrapper = mqttClientWrapper;
-  s_mqttClientWrapper->setCallbackAdapter(new PubSubClientCallbackAdapter());
+  s_mqttClientWrapper->setCallbackAdapter(mqttClientCallbackAdapter);
 }
 
 

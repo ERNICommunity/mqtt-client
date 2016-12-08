@@ -10,6 +10,7 @@
 
 class Client;
 class IMqttClientWrapper;
+class IMqttClientCallbackAdapter;
 class PubSubClientWrapper;
 class Timer;
 class LanConnectionMonitor;
@@ -26,7 +27,7 @@ public:
 
   virtual ~MqttClientController();
 
-  static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper);
+  static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
 
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
