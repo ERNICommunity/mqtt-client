@@ -10,14 +10,19 @@
 
 class Timer;
 class LanConnMonState;
+class DbgTrace_Port;
 
 class LanConnMonAdapter
 {
 public:
-  LanConnMonAdapter() { }
-  virtual ~LanConnMonAdapter() { }
+  LanConnMonAdapter();
+  virtual ~LanConnMonAdapter();
   virtual bool connectedRaw();
   virtual void notifyLanConnected(bool isLanConnected) { }
+  DbgTrace_Port* trPort();
+
+private:
+  DbgTrace_Port* m_trPort;
 
 private:
   // forbidden default functions
@@ -36,7 +41,8 @@ public:
   void evaluateState();
   void changeState(LanConnMonState* newState);
   LanConnMonState* state();
-  const char* getCurrentStateName();
+  LanConnMonState* prevState();
+//  const char* getCurrentStateName();
   void startStableConnCheckTimer();
 
 private:
@@ -61,9 +67,9 @@ protected:
 
 public:
   virtual ~LanConnMonState() { }
-  virtual void evaluateState(LanConnectionMonitor* monitor) { }
+  virtual void evaluateState(LanConnectionMonitor* monitor) = 0;
   virtual void timeExpired(LanConnectionMonitor* monitor) { }
-  virtual void entry(LanConnectionMonitor* monitor) { }
+  virtual void entry(LanConnectionMonitor* monitor);
   virtual const char* toString() = 0;
 };
 

@@ -5,6 +5,8 @@
  *      Author: nid
  */
 
+#include <DbgTracePort.h>
+#include <DbgTraceLevel.h>
 #include <PubSubClient.h>
 
 #include <PubSubClientWrapper.h>
@@ -98,4 +100,30 @@ IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
   return iMqttClientState;
 };
 
+//-----------------------------------------------------------------------------
 
+PubSubClientCallbackAdapter::PubSubClientCallbackAdapter()
+: m_trPort(new DbgTrace_Port("mqttrx", DbgTrace_Level::info))
+{ }
+
+PubSubClientCallbackAdapter::~PubSubClientCallbackAdapter()
+{
+  delete m_trPort;
+  m_trPort = 0;
+}
+
+void PubSubClientCallbackAdapter::messageReceived(char* topic, byte* payload, unsigned int length)
+{
+  char msg[length+1];
+  memcpy(msg, payload, length);
+  msg[length] = 0;
+
+  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "Message arrived, topic:");
+  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, topic);
+  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, msg);
+
+
+  // TODO: remove this application specific code fragment below:
+  bool pinState = atoi(msg);
+  digitalWrite(BUILTIN_LED, pinState);
+}

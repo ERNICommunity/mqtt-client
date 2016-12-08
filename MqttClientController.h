@@ -13,6 +13,7 @@ class IMqttClientWrapper;
 class PubSubClientWrapper;
 class Timer;
 class LanConnectionMonitor;
+class DbgTrace_Port;
 
 class MqttClientController
 {
@@ -22,7 +23,7 @@ private:
   MqttClientController();
 public:
   static MqttClientController* Instance();
-public:
+
   virtual ~MqttClientController();
 
   static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper);

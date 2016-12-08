@@ -10,6 +10,7 @@
 #include <ESP8266WiFi.h>
 #endif
 #include <Timer.h>
+#include <DbgTracePort.h>
 
 #include <LanConnectionMonitor.h>
 
@@ -51,16 +52,34 @@ public:
   }
 };
 
+//-----------------------------------------------------------------------------
+
+LanConnMonAdapter::LanConnMonAdapter()
+: m_trPort(new DbgTrace_Port("lanmon", DbgTrace_Level::info))
+{ }
+
+LanConnMonAdapter::~LanConnMonAdapter()
+{
+  delete m_trPort;
+  m_trPort = 0;
+}
+
+DbgTrace_Port* LanConnMonAdapter::trPort()
+{
+  return m_trPort;
+}
+
 bool LanConnMonAdapter::connectedRaw()
 {
   bool isConnected = false;
 #ifdef ESP8266
   isConnected = WiFi.isConnected();
 #endif
-  Serial.print("LanConnMonAdapter: ");
-  Serial.println(isConnected ? "connected" : "disconnected");
+  TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isConnected ? "WiFi is connected" : "WiFi is disconnected"));
   return isConnected;
 }
+
+//-----------------------------------------------------------------------------
 
 const unsigned long cStatusPollIntervalMillis  = 1000;
 const unsigned long cStableCheckIntervalMillis = 6000;
@@ -120,11 +139,11 @@ void LanConnectionMonitor::evaluateState()
 {
   if (0 != m_state)
   {
-    Serial.println("LanConnectionMonitor::evaluateState()");
-    Serial.print("State: ");
-    Serial.println(m_state == LanConnMonState_Unconnected::Instance()      ? "LanConnMonState_Unconnected"      :
-                   m_state == LanConnMonState_Connected::Instance()        ? "LanConnMonState_Connected"        :
-                   m_state == LanConnMonState_StableConnection::Instance() ? "LanConnMonState_StableConnection" : "Unknown");
+//    Serial.println("LanConnectionMonitor::evaluateState()");
+//    Serial.print("State: ");
+//    Serial.println(m_state == LanConnMonState_Unconnected::Instance()      ? "LanConnMonState_Unconnected"      :
+//                   m_state == LanConnMonState_Connected::Instance()        ? "LanConnMonState_Connected"        :
+//                   m_state == LanConnMonState_StableConnection::Instance() ? "LanConnMonState_StableConnection" : "Unknown");
     m_state->evaluateState(this);
   }
 }
@@ -149,15 +168,29 @@ LanConnMonState* LanConnectionMonitor::state()
   return m_state;
 }
 
-const char* LanConnectionMonitor::getCurrentStateName()
+LanConnMonState* LanConnectionMonitor::prevState()
 {
-  if (0 == m_state)
-  {
-    return "LanConnectionMonitor::m_state, null pointer exception";
-  }
-  return m_state->toString();
+  return m_prevState;
 }
 
+//const char* LanConnectionMonitor::getCurrentStateName()
+//{
+//  if (0 == m_state)
+//  {
+//    return "LanConnectionMonitor::m_state, null pointer exception";
+//  }
+//  return m_state->toString();
+//}
+
+//-----------------------------------------------------------------------------
+
+
+void LanConnMonState::entry(LanConnectionMonitor* monitor)
+{
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, "entering from state to state:");
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, monitor->prevState()->toString());
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, monitor->state()->toString());
+}
 
 //-----------------------------------------------------------------------------
 
@@ -182,7 +215,7 @@ void LanConnMonState_Unconnected::evaluateState(LanConnectionMonitor* monitor)
 
 void LanConnMonState_Unconnected::entry(LanConnectionMonitor* monitor)
 {
-  Serial.println("LAN Conn FSM: entered Unconnected state");
+  LanConnMonState::entry(monitor);
 }
 
 const char* LanConnMonState_Unconnected::toString()
@@ -229,7 +262,7 @@ void LanConnMonState_Connected::timeExpired(LanConnectionMonitor* monitor)
 
 void LanConnMonState_Connected::entry(LanConnectionMonitor* monitor)
 {
-  Serial.println("LAN Conn FSM: entered Connected state");
+  LanConnMonState::entry(monitor);
   monitor->startStableConnCheckTimer();
 }
 
@@ -261,7 +294,7 @@ void LanConnMonState_StableConnection::evaluateState(LanConnectionMonitor* monit
 
 void LanConnMonState_StableConnection::entry(LanConnectionMonitor* monitor)
 {
-  Serial.println("LAN Conn FSM: entered StableConnection state");
+  LanConnMonState::entry(monitor);
 }
 
 const char* LanConnMonState_StableConnection::toString()

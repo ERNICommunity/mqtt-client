@@ -59,7 +59,7 @@ public:
   {
     if (isLanConnected)
     {
-      Serial.println("LAN Connection: ON");
+      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: ON");
       if (m_mqttClientCtrl->getShallConnect())
       {
         m_mqttClientCtrl->reconnect();
@@ -67,28 +67,8 @@ public:
     }
     else
     {
-      Serial.println("LAN Connection: OFF");
+      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: OFF");
     }
-  }
-};
-
-//-----------------------------------------------------------------------------
-
-class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
-{
-public:
-  void messageReceived(char* topic, byte* payload, unsigned int length)
-  {
-    char msg[length+1];
-    memcpy(msg, payload, length);
-    msg[length] = 0;
-    Serial.print(F("Message arrived ["));
-    Serial.print(topic);
-    Serial.print(F("] "));
-    Serial.println(msg);
-
-    bool pinState = atoi(msg);
-    digitalWrite(BUILTIN_LED, pinState);
   }
 };
 
@@ -112,6 +92,7 @@ MqttClientController::MqttClientController()
 : m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
 , m_lanConnMon(new LanConnectionMonitor(new MyLanConnMonAdapter(this)))
 , m_isConnected(false)
+, m_trPort(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -173,7 +154,7 @@ void MqttClientController::reconnect()
 {
   if (m_lanConnMon->isConnected())
   {
-    Serial.println("LAN Client is connected");
+    TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "LAN Client is connected");
     bool newIsConnected = s_mqttClientWrapper->connected();
     if (m_isConnected != newIsConnected)
     {
@@ -183,17 +164,17 @@ void MqttClientController::reconnect()
 //      delay(5000);
 
       int state = s_mqttClientWrapper->state();
-      Serial.print("MQTT client status: ");
-      Serial.println(state == MQTT_CONNECTION_TIMEOUT      ? "CONNECTION_TIMEOUT"      :
-                     state == MQTT_CONNECTION_LOST         ? "CONNECTION_LOST"         :
-                     state == MQTT_CONNECT_FAILED          ? "CONNECT_FAILED"          :
-                     state == MQTT_DISCONNECTED            ? "DISCONNECTED"            :
-                     state == MQTT_CONNECTED               ? "CONNECTED"               :
-                     state == MQTT_CONNECT_BAD_PROTOCOL    ? "CONNECT_BAD_PROTOCOL"    :
-                     state == MQTT_CONNECT_BAD_CLIENT_ID   ? "CONNECT_BAD_CLIENT_ID"   :
-                     state == MQTT_CONNECT_UNAVAILABLE     ? "CONNECT_UNAVAILABLE"     :
-                     state == MQTT_CONNECT_BAD_CREDENTIALS ? "CONNECT_BAD_CREDENTIALS" :
-                     state == MQTT_CONNECT_UNAUTHORIZED    ? "CONNECT_UNAUTHORIZED"    : "UNKNOWN");
+      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT client status: ");
+      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, (state == MQTT_CONNECTION_TIMEOUT      ? "  CONNECTION_TIMEOUT"      :
+                                                     state == MQTT_CONNECTION_LOST         ? "  CONNECTION_LOST"         :
+                                                     state == MQTT_CONNECT_FAILED          ? "  CONNECT_FAILED"          :
+                                                     state == MQTT_DISCONNECTED            ? "  DISCONNECTED"            :
+                                                     state == MQTT_CONNECTED               ? "  CONNECTED"               :
+                                                     state == MQTT_CONNECT_BAD_PROTOCOL    ? "  CONNECT_BAD_PROTOCOL"    :
+                                                     state == MQTT_CONNECT_BAD_CLIENT_ID   ? "  CONNECT_BAD_CLIENT_ID"   :
+                                                     state == MQTT_CONNECT_UNAVAILABLE     ? "  CONNECT_UNAVAILABLE"     :
+                                                     state == MQTT_CONNECT_BAD_CREDENTIALS ? "  CONNECT_BAD_CREDENTIALS" :
+                                                     state == MQTT_CONNECT_UNAUTHORIZED    ? "  CONNECT_UNAUTHORIZED"    : "  UNKNOWN"));
     }
 
     loop();
@@ -201,19 +182,19 @@ void MqttClientController::reconnect()
     if (m_isConnected)
     {
       // connected, subscribe to topics (if not yet done)
-      Serial.println("MQTT connection ok");
+      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT connection ok");
     }
     else
     {
       // not connected, try to re-connect
-      Serial.println("MQTT not connected - trying to connect");
+      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT not connected - trying to connect");
 //      delay(5000);
       connect();
     }
   }
   else
   {
-    Serial.println("LAN Client is not connected");
+    TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "LAN Client is not connected");
   }
 }
 

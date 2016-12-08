@@ -11,6 +11,7 @@
 #include "IMqttClientWrapper.h"
 
 class PubSubClient;
+class DbgTrace_Port;
 
 const unsigned short int defaultMqttPort = 1883;
 
@@ -42,6 +43,23 @@ private: // forbidden default functions
   PubSubClientWrapper();                                            // default constructor
   PubSubClientWrapper& operator = (const PubSubClientWrapper& src); // assignment operator
   PubSubClientWrapper(const PubSubClientWrapper& src);              // copy constructor
+};
+
+//-----------------------------------------------------------------------------
+
+class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
+{
+private:
+  DbgTrace_Port* m_trPort;
+public:
+  PubSubClientCallbackAdapter();
+  virtual ~PubSubClientCallbackAdapter();
+  void messageReceived(char* topic, byte* payload, unsigned int length);
+
+private: // forbidden default functions
+  PubSubClientCallbackAdapter& operator = (const PubSubClientCallbackAdapter& src); // assignment operator
+  PubSubClientCallbackAdapter(const PubSubClientCallbackAdapter& src);              // copy constructor
+
 };
 
 #endif /* LIB_MQTT_CLIENT_PUBSUBCLIENTWRAPPER_H_ */
