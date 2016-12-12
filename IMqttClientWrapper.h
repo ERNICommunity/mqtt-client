@@ -8,6 +8,8 @@
 #ifndef LIB_MQTT_CLIENT_IMQTTCLIENTWRAPPER_H_
 #define LIB_MQTT_CLIENT_IMQTTCLIENTWRAPPER_H_
 
+class Client;
+
 class IMqttClientCallbackAdapter
 {
 protected:
@@ -34,6 +36,8 @@ public:
   virtual void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter) = 0;
 
   virtual IMqttClientCallbackAdapter* callbackAdapter() = 0;
+
+  virtual Client& client() = 0;
 
   /**
    * Process MQTT messages.
@@ -79,6 +83,22 @@ public:
   } eIMqttClientState;
 
   virtual eIMqttClientState state() = 0;
+
+  virtual const char* stateStr()
+  {
+    eIMqttClientState st = state();
+    return (
+      (eIMqttCS_Connected             == st) ? "MqttCS_Connected"             :
+      (eIMqttCS_ConnectBadProtocol    == st) ? "MqttCS_ConnectBadProtocol"    :
+      (eIMqttCS_ConnectBadClientId    == st) ? "MqttCS_ConnectBadClientId"    :
+      (eIMqttCS_ConnectUnavailable    == st) ? "MqttCS_ConnectUnavailable"    :
+      (eIMqttCS_ConnectBadCredentials == st) ? "MqttCS_ConnectBadCredentials" :
+      (eIMqttCS_ConnectUnauthorized   == st) ? "MqttCS_ConnectUnauthorized"   :
+      (eIMqttCS_ConnectionTimeout     == st) ? "MqttCS_ConnectionTimeout"     :
+      (eIMqttCS_ConnectionLost        == st) ? "MqttCS_ConnectionLost"        :
+      (eIMqttCS_ConnectFailed         == st) ? "MqttCS_ConnectFailed"         :
+      (eIMqttCS_Disconnected          == st) ? "MqttCS_Disconnected"          : "MqttCS_UNKNOWN");
+  }
 
 private: // forbidden default functions
   IMqttClientWrapper& operator = (const IMqttClientWrapper& src); // assignment operator

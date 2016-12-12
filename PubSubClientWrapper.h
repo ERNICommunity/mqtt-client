@@ -23,6 +23,7 @@ public:
 
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
+  Client& client();
   void processMessages();
   bool connect(const char* id);
   void disconnect();
@@ -36,6 +37,7 @@ public:
   static PubSubClientWrapper* s_pubSubClientWrapper;
 
 private:
+  Client& m_client;
   PubSubClient* m_pubSubClient;
   IMqttClientCallbackAdapter* m_callbackAdapter;
 
@@ -50,7 +52,8 @@ private: // forbidden default functions
 class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
 {
 private:
-  DbgTrace_Port* m_trPort;
+  DbgTrace_Port* m_trPortMqttRx;
+
 public:
   PubSubClientCallbackAdapter();
   virtual ~PubSubClientCallbackAdapter();

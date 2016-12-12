@@ -5,6 +5,11 @@
  *      Author: nid
  */
 
+#include <Arduino.h>
+#ifdef ESP8266
+#include <ESP8266WiFi.h>
+#endif
+
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <PubSubClient.h>
@@ -14,7 +19,8 @@
 PubSubClientWrapper* PubSubClientWrapper::s_pubSubClientWrapper = 0;
 
 PubSubClientWrapper::PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
-: m_pubSubClient(new PubSubClient(mqttServerAddr, mqttPort, lanClient))
+: m_client(lanClient)
+, m_pubSubClient(new PubSubClient(mqttServerAddr, mqttPort, lanClient))
 , m_callbackAdapter(0)
 {
   s_pubSubClientWrapper = this;
@@ -41,6 +47,12 @@ IMqttClientCallbackAdapter* PubSubClientWrapper::callbackAdapter()
 {
   return m_callbackAdapter;
 }
+
+Client& PubSubClientWrapper::client()
+{
+  return m_client;
+}
+
 
 bool PubSubClientWrapper::connect(const char* id)
 {
@@ -84,16 +96,16 @@ IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
 
   switch (pubSubClientState)
   {
-    case MQTT_CONNECTION_TIMEOUT       : iMqttClientState = IMqttClientWrapper::eIMqttCS_Connected             ; break;
-    case MQTT_CONNECTION_LOST          : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadProtocol    ; break;
-    case MQTT_CONNECT_FAILED           : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadClientId    ; break;
-    case MQTT_DISCONNECTED             : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnavailable    ; break;
-    case MQTT_CONNECTED                : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadCredentials ; break;
-    case MQTT_CONNECT_BAD_PROTOCOL     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnauthorized   ; break;
-    case MQTT_CONNECT_BAD_CLIENT_ID    : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionTimeout     ; break;
-    case MQTT_CONNECT_UNAVAILABLE      : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionLost        ; break;
-    case MQTT_CONNECT_BAD_CREDENTIALS  : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectFailed         ; break;
-    case MQTT_CONNECT_UNAUTHORIZED     : iMqttClientState = IMqttClientWrapper::eIMqttCS_Disconnected          ; break;
+    case MQTT_CONNECTION_TIMEOUT       : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionTimeout    ; break;
+    case MQTT_CONNECTION_LOST          : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionLost       ; break;
+    case MQTT_CONNECT_FAILED           : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectFailed        ; break;
+    case MQTT_DISCONNECTED             : iMqttClientState = IMqttClientWrapper::eIMqttCS_Disconnected         ; break;
+    case MQTT_CONNECTED                : iMqttClientState = IMqttClientWrapper::eIMqttCS_Connected            ; break;
+    case MQTT_CONNECT_BAD_PROTOCOL     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadProtocol   ; break;
+    case MQTT_CONNECT_BAD_CLIENT_ID    : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadClientId   ; break;
+    case MQTT_CONNECT_UNAVAILABLE      : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnavailable   ; break;
+    case MQTT_CONNECT_BAD_CREDENTIALS  : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadCredentials; break;
+    case MQTT_CONNECT_UNAUTHORIZED     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnauthorized  ; break;
     default: break;
   }
 
@@ -103,13 +115,13 @@ IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
 //-----------------------------------------------------------------------------
 
 PubSubClientCallbackAdapter::PubSubClientCallbackAdapter()
-: m_trPort(new DbgTrace_Port("mqttrx", DbgTrace_Level::info))
+: m_trPortMqttRx(new DbgTrace_Port("mqttrx", DbgTrace_Level::info))
 { }
 
 PubSubClientCallbackAdapter::~PubSubClientCallbackAdapter()
 {
-  delete m_trPort;
-  m_trPort = 0;
+  delete m_trPortMqttRx;
+  m_trPortMqttRx = 0;
 }
 
 void PubSubClientCallbackAdapter::messageReceived(char* topic, byte* payload, unsigned int length)
@@ -118,12 +130,12 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, byte* payload, un
   memcpy(msg, payload, length);
   msg[length] = 0;
 
-  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "Message arrived, topic:");
-  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, topic);
-  TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, msg);
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, "Message arrived, topic:");
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, topic);
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, msg);
 
 
   // TODO: remove this application specific code fragment below:
   bool pinState = atoi(msg);
-  digitalWrite(BUILTIN_LED, pinState);
+  digitalWrite(BUILTIN_LED, !pinState);
 }
