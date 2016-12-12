@@ -41,11 +41,14 @@ public:
   void connect();
   void reconnect();
 
+  LanConnectionMonitor* lanConnMon();
+  DbgTrace_Port* trPort();
+
 private:
   static MqttClientController* s_instance;
   static IMqttClientWrapper*   s_mqttClientWrapper;
   Timer* m_reconnectTimer;
-  DbgTrace_Port* m_trPort;
+  DbgTrace_Port* m_trPortMqttctrl;
   LanConnectionMonitor* m_lanConnMon;
 
   bool m_isConnected;
