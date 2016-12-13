@@ -83,7 +83,7 @@ bool LanConnMonAdapter::connectedRaw()
 //-----------------------------------------------------------------------------
 
 const unsigned long cStatusPollIntervalMillis  = 1000;
-const unsigned long cStableCheckIntervalMillis = 6000;
+const unsigned long cStableCheckIntervalMillis = 1000;
 
 LanConnectionMonitor::LanConnectionMonitor(LanConnMonAdapter* adapter)
 : m_statusPollTimer(new Timer(new StatusPollTimerAdapter(this), Timer::IS_RECURRING, cStatusPollIntervalMillis))

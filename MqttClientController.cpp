@@ -81,7 +81,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-const unsigned long mqttClientCtrlReconnectTimeMillis = 5000;
+const unsigned long mqttClientCtrlReconnectTimeMillis = 1000;
 
 MqttClientController* MqttClientController::s_instance = 0;
 IMqttClientWrapper* MqttClientController::s_mqttClientWrapper = 0;
@@ -189,6 +189,7 @@ void MqttClientController::reconnect()
   {
     TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "LAN Client is not connected");
     s_mqttClientWrapper->disconnect();
+    m_isConnected = false;
   }
 }
 
@@ -204,7 +205,10 @@ DbgTrace_Port* MqttClientController::trPort()
 
 void MqttClientController::loop()
 {
-  s_mqttClientWrapper->processMessages();
+  if (m_isConnected)
+  {
+    m_isConnected = s_mqttClientWrapper->processMessages();
+  }
 }
 
 int MqttClientController::publish(const char* topic, const char* data)
