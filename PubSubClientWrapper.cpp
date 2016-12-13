@@ -69,9 +69,9 @@ bool PubSubClientWrapper::connected()
   return m_pubSubClient->connected();
 }
 
-void PubSubClientWrapper::processMessages()
+bool PubSubClientWrapper::processMessages()
 {
-  m_pubSubClient->loop();
+  return m_pubSubClient->loop();
 }
 
 unsigned char PubSubClientWrapper::publish(const char* topic, const char* data)

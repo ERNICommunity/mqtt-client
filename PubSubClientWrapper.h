@@ -24,7 +24,7 @@ public:
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
   Client& client();
-  void processMessages();
+  bool processMessages();
   bool connect(const char* id);
   void disconnect();
   bool connected();

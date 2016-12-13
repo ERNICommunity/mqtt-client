@@ -42,8 +42,9 @@ public:
   /**
    * Process MQTT messages.
    * To be called in the Arduino loop() function.
+   * @return Connect status, true: connected, false: disconnected
    */
-  virtual void processMessages() = 0;
+  virtual bool processMessages() = 0;
 
   virtual bool connect(const char* id) = 0;
   virtual void disconnect() = 0;
