@@ -11,6 +11,7 @@
 #endif
 #include <Timer.h>
 #include <DbgTracePort.h>
+#include <DbgTraceLevel.h>
 
 #include <LanConnectionMonitor.h>
 
@@ -139,11 +140,6 @@ void LanConnectionMonitor::evaluateState()
 {
   if (0 != m_state)
   {
-//    Serial.println("LanConnectionMonitor::evaluateState()");
-//    Serial.print("State: ");
-//    Serial.println(m_state == LanConnMonState_Unconnected::Instance()      ? "LanConnMonState_Unconnected"      :
-//                   m_state == LanConnMonState_Connected::Instance()        ? "LanConnMonState_Connected"        :
-//                   m_state == LanConnMonState_StableConnection::Instance() ? "LanConnMonState_StableConnection" : "Unknown");
     m_state->evaluateState(this);
   }
 }
@@ -173,23 +169,14 @@ LanConnMonState* LanConnectionMonitor::prevState()
   return m_prevState;
 }
 
-//const char* LanConnectionMonitor::getCurrentStateName()
-//{
-//  if (0 == m_state)
-//  {
-//    return "LanConnectionMonitor::m_state, null pointer exception";
-//  }
-//  return m_state->toString();
-//}
-
 //-----------------------------------------------------------------------------
 
 
 void LanConnMonState::entry(LanConnectionMonitor* monitor)
 {
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, "entering from state to state:");
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, monitor->prevState()->toString());
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::debug, monitor->state()->toString());
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, "FSM, entering: from state to state:");
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, monitor->prevState()->toString());
+  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, monitor->state()->toString());
 }
 
 //-----------------------------------------------------------------------------
