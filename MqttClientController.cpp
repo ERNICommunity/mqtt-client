@@ -173,6 +173,7 @@ void MqttClientController::reconnect()
     if (m_isConnected)
     {
       // connected, subscribe to topics (if not yet done)
+      m_handlerChain->subscribe();
       TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT connection ok");
     }
     else
@@ -221,7 +222,7 @@ int MqttClientController::publish(const char* topic, const char* data)
 
 int MqttClientController::subscribe(const char* topic)
 {
-  addMsgHandler(new DefaultMqttMsgHandler(topic));
+//  addMsgHandler(new DefaultMqttMsgHandler(topic));
   return s_mqttClientWrapper->subscribe(topic);
 }
 
