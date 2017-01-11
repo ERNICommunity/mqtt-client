@@ -20,9 +20,11 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
+#include <MqttMsgHandler.h>
 #include <LanConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
 #include <MqttClientDbgCommand.h>
+
 
 #include <MqttClientController.h>
 
@@ -100,6 +102,7 @@ MqttClientController::MqttClientController()
 , m_lanConnMon(new LanConnectionMonitor(new MyLanConnMonAdapter(this)))
 , m_isConnected(false)
 , m_trPortMqttctrl(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
+, m_handlerChain(0)
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -159,8 +162,8 @@ void MqttClientController::connect()
 
 void MqttClientController::reconnect()
 {
-  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::info, "MQTT client status: ");
-  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::info, s_mqttClientWrapper->stateStr());
+  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT client status: ");
+  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, s_mqttClientWrapper->stateStr());
 
   if (m_lanConnMon->isConnected())
   {
@@ -170,12 +173,12 @@ void MqttClientController::reconnect()
     if (m_isConnected)
     {
       // connected, subscribe to topics (if not yet done)
-      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::notice, "MQTT connection ok");
+      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT connection ok");
     }
     else
     {
       // not connected, try to re-connect
-      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::notice, "MQTT not connected - trying to connect");
+      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT not connected - trying to connect");
 
       // possible workaround for a possible PubSubClient bug:
       s_mqttClientWrapper->disconnect();
@@ -218,11 +221,35 @@ int MqttClientController::publish(const char* topic, const char* data)
 
 int MqttClientController::subscribe(const char* topic)
 {
+  addMsgHandler(new DefaultMqttMsgHandler(topic));
   return s_mqttClientWrapper->subscribe(topic);
+}
+
+int MqttClientController::subscribe(MqttMsgHandler* mqttMsgHandler)
+{
+  addMsgHandler(mqttMsgHandler);
+  return s_mqttClientWrapper->subscribe(mqttMsgHandler->getTopic());
 }
 
 int MqttClientController::unsubscribe(const char* topic)
 {
+  // TODO: remove and delete the default handler object
   return s_mqttClientWrapper->unsubscribe(topic);
 }
 
+MqttMsgHandler* MqttClientController::msgHandlerChain()
+{
+  return m_handlerChain;
+}
+
+void MqttClientController::addMsgHandler(MqttMsgHandler* handler)
+{
+  if (0 == m_handlerChain)
+  {
+    m_handlerChain = handler;
+  }
+  else
+  {
+    m_handlerChain->addHandler(handler);
+  }
+}

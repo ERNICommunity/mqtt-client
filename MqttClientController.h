@@ -15,6 +15,7 @@ class PubSubClientWrapper;
 class Timer;
 class LanConnectionMonitor;
 class DbgTrace_Port;
+class MqttMsgHandler;
 
 class MqttClientController
 {
@@ -36,6 +37,7 @@ public:
 
   int publish(const char* topic, const char* data);
   int subscribe(const char* topic);
+  int subscribe(MqttMsgHandler* mqttMsgHandler);
   int unsubscribe(const char* topic);
 
   void connect();
@@ -43,6 +45,11 @@ public:
 
   LanConnectionMonitor* lanConnMon();
   DbgTrace_Port* trPort();
+
+  MqttMsgHandler* msgHandlerChain();
+
+private:
+  void addMsgHandler(MqttMsgHandler* handler);
 
 private:
   static MqttClientController* s_instance;
@@ -52,6 +59,8 @@ private:
   LanConnectionMonitor* m_lanConnMon;
 
   bool m_isConnected;
+
+  MqttMsgHandler* m_handlerChain;
 
 private: // forbidden default functions
   MqttClientController& operator = (const MqttClientController& src); // assignment operator

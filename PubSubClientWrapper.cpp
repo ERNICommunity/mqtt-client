@@ -13,6 +13,8 @@
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <PubSubClient.h>
+#include <MqttMsgHandler.h>
+#include <MqttClientController.h>
 
 #include <PubSubClientWrapper.h>
 
@@ -134,8 +136,9 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, byte* payload, un
   TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, topic);
   TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, msg);
 
-
-  // TODO: remove this application specific code fragment below:
-  bool pinState = atoi(msg);
-  digitalWrite(BUILTIN_LED, !pinState);
+  MqttMsgHandler* msgHandlerChain = MqttClientController::Instance()->msgHandlerChain();
+  if (0 != msgHandlerChain)
+  {
+    MqttClientController::Instance()->msgHandlerChain()->handleMessage(topic, payload, length);
+  }
 }
