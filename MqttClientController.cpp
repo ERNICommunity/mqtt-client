@@ -20,9 +20,11 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
+#include <MqttMsgHandler.h>
 #include <LanConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
 #include <MqttClientDbgCommand.h>
+
 
 #include <MqttClientController.h>
 
@@ -38,7 +40,14 @@ public:
 
   void timeExpired()
   {
-    m_mqttClientCtrl->reconnect();
+    if (m_mqttClientCtrl->lanConnMon()->isConnected())
+    {
+      TR_PRINT_STR(m_mqttClientCtrl->trPort(), DbgTrace_Level::debug, "LAN Connection: ON");
+      if (m_mqttClientCtrl->getShallConnect())
+      {
+        m_mqttClientCtrl->reconnect();
+      }
+    }
   }
 };
 
@@ -74,7 +83,7 @@ public:
 
 //-----------------------------------------------------------------------------
 
-const unsigned long mqttClientCtrlReconnectTimeMillis = 5000;
+const unsigned long mqttClientCtrlReconnectTimeMillis = 1000;
 
 MqttClientController* MqttClientController::s_instance = 0;
 IMqttClientWrapper* MqttClientController::s_mqttClientWrapper = 0;
@@ -92,7 +101,8 @@ MqttClientController::MqttClientController()
 : m_reconnectTimer(new Timer(new MqttClientCtrlReconnectTimerAdapter(this), Timer::IS_RECURRING))
 , m_lanConnMon(new LanConnectionMonitor(new MyLanConnMonAdapter(this)))
 , m_isConnected(false)
-, m_trPort(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
+, m_trPortMqttctrl(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
+, m_handlerChain(0)
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -152,56 +162,57 @@ void MqttClientController::connect()
 
 void MqttClientController::reconnect()
 {
+  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT client status: ");
+  TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, s_mqttClientWrapper->stateStr());
+
   if (m_lanConnMon->isConnected())
   {
-    TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "LAN Client is connected");
-    bool newIsConnected = s_mqttClientWrapper->connected();
-    if (m_isConnected != newIsConnected)
-    {
-      // connection state changed
-      m_isConnected = newIsConnected;
-
-//      delay(5000);
-
-      int state = s_mqttClientWrapper->state();
-      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT client status: ");
-      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, (state == MQTT_CONNECTION_TIMEOUT      ? "  CONNECTION_TIMEOUT"      :
-                                                     state == MQTT_CONNECTION_LOST         ? "  CONNECTION_LOST"         :
-                                                     state == MQTT_CONNECT_FAILED          ? "  CONNECT_FAILED"          :
-                                                     state == MQTT_DISCONNECTED            ? "  DISCONNECTED"            :
-                                                     state == MQTT_CONNECTED               ? "  CONNECTED"               :
-                                                     state == MQTT_CONNECT_BAD_PROTOCOL    ? "  CONNECT_BAD_PROTOCOL"    :
-                                                     state == MQTT_CONNECT_BAD_CLIENT_ID   ? "  CONNECT_BAD_CLIENT_ID"   :
-                                                     state == MQTT_CONNECT_UNAVAILABLE     ? "  CONNECT_UNAVAILABLE"     :
-                                                     state == MQTT_CONNECT_BAD_CREDENTIALS ? "  CONNECT_BAD_CREDENTIALS" :
-                                                     state == MQTT_CONNECT_UNAUTHORIZED    ? "  CONNECT_UNAUTHORIZED"    : "  UNKNOWN"));
-    }
-
-    loop();
+    TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "LAN Client is connected");
+    m_isConnected = s_mqttClientWrapper->connected();
 
     if (m_isConnected)
     {
       // connected, subscribe to topics (if not yet done)
       m_handlerChain->subscribe();
-      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT connection ok");
+      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT connection ok");
     }
     else
     {
       // not connected, try to re-connect
-      TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "MQTT not connected - trying to connect");
-//      delay(5000);
+      TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "MQTT not connected - trying to connect");
+
+      // possible workaround for a possible PubSubClient bug:
+      s_mqttClientWrapper->disconnect();
+      s_mqttClientWrapper->client().flush();
+
+      loop();
       connect();
     }
   }
   else
   {
-    TR_PRINT_STR(m_trPort, DbgTrace_Level::debug, "LAN Client is not connected");
+    TR_PRINT_STR(m_trPortMqttctrl, DbgTrace_Level::debug, "LAN Client is not connected");
+    s_mqttClientWrapper->disconnect();
+    m_isConnected = false;
   }
+}
+
+LanConnectionMonitor* MqttClientController::lanConnMon()
+{
+  return m_lanConnMon;
+}
+
+DbgTrace_Port* MqttClientController::trPort()
+{
+  return m_trPortMqttctrl;
 }
 
 void MqttClientController::loop()
 {
-  s_mqttClientWrapper->processMessages();
+  if (m_isConnected)
+  {
+    m_isConnected = s_mqttClientWrapper->processMessages();
+  }
 }
 
 int MqttClientController::publish(const char* topic, const char* data)
@@ -215,8 +226,31 @@ int MqttClientController::subscribe(const char* topic)
   return s_mqttClientWrapper->subscribe(topic);
 }
 
+int MqttClientController::subscribe(MqttMsgHandler* mqttMsgHandler)
+{
+  addMsgHandler(mqttMsgHandler);
+  return s_mqttClientWrapper->subscribe(mqttMsgHandler->getTopic());
+}
+
 int MqttClientController::unsubscribe(const char* topic)
 {
+  // TODO: remove and delete the default handler object
   return s_mqttClientWrapper->unsubscribe(topic);
 }
 
+MqttMsgHandler* MqttClientController::msgHandlerChain()
+{
+  return m_handlerChain;
+}
+
+void MqttClientController::addMsgHandler(MqttMsgHandler* handler)
+{
+  if (0 == m_handlerChain)
+  {
+    m_handlerChain = handler;
+  }
+  else
+  {
+    m_handlerChain->addHandler(handler);
+  }
+}

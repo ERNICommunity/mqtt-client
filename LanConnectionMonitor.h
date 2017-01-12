@@ -27,7 +27,7 @@ private:
 private:
   // forbidden default functions
   LanConnMonAdapter& operator =(const LanConnMonAdapter& src); // assignment operator
-  LanConnMonAdapter(const LanConnMonAdapter& src);     // copy constructor
+  LanConnMonAdapter(const LanConnMonAdapter& src);             // copy constructor
 };
 
 class LanConnectionMonitor
@@ -42,7 +42,6 @@ public:
   void changeState(LanConnMonState* newState);
   LanConnMonState* state();
   LanConnMonState* prevState();
-//  const char* getCurrentStateName();
   void startStableConnCheckTimer();
 
 private:
