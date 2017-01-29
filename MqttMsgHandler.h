@@ -26,6 +26,8 @@ public:
 
   const char* getTopic();
 
+  void subscribe();
+
   MqttMsgHandler* next();
 
 private:

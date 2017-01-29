@@ -16,6 +16,8 @@
 #include <MqttClientController.h>
 #include <MqttClientDbgCommand.h>
 
+#include "MqttMsgHandler.h"
+
 //-----------------------------------------------------------------------------
 
 DbgCli_Cmd_MqttClientCon::DbgCli_Cmd_MqttClientCon(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
@@ -121,7 +123,7 @@ void DbgCli_Cmd_MqttClientSub::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      int retVal = m_mqttClient->subscribe(args[idxToFirstArgToHandle]);
+      int retVal = m_mqttClient->subscribe(new DefaultMqttMsgHandler(args[idxToFirstArgToHandle]));
       Serial.print("MQTT client, subscribe ");
       Serial.println(retVal == 1 ? "successful" : "failed");
     }

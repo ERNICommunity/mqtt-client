@@ -10,6 +10,7 @@
 
 #include "MqttMsgHandler.h"
 
+#include "MqttClientController.h"
 MqttMsgHandler::MqttMsgHandler(const char* topic)
 : m_topic(0)
 , m_next(0)
@@ -49,6 +50,15 @@ bool MqttMsgHandler::isMyTopic(const char* topic)
 const char* MqttMsgHandler::getTopic()
 {
   return m_topic;
+}
+
+void MqttMsgHandler::subscribe()
+{
+  MqttClientController::Instance()->subscribe(getTopic());
+  if (0 != next())
+  {
+    next()->subscribe();
+  }
 }
 
 MqttMsgHandler* MqttMsgHandler::next()
