@@ -39,6 +39,16 @@ public:
   , m_mqttClientCtrl(mqttClientCtrl)
   { }
 
+  bool mqttConnectedRaw()
+  {
+    bool isMqttConnected = false;
+    if (0 != m_mqttClientCtrl)
+    {
+      isMqttConnected = m_mqttClientCtrl->mqttClientWrapper()->connected();
+    }
+    return isMqttConnected;
+  }
+
   void notifyLanConnected(bool isLanConnected)
   {
     if (isLanConnected)
@@ -57,6 +67,19 @@ public:
     else
     {
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: OFF");
+      m_mqttClientCtrl->
+    }
+  }
+
+  void notifyMqttConnected(bool isMqttConnected)
+  {
+    if (isMqttConnected)
+    {
+      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
+    }
+    else
+    {
+      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: OFF");
     }
   }
 

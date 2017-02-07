@@ -31,6 +31,8 @@ public:
   static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
   static IMqttClientWrapper* mqttClientWrapper();
 
+  IMqttClientWrapper* mqttClientWrapper();
+
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
 
