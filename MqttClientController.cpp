@@ -67,19 +67,6 @@ public:
     else
     {
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: OFF");
-      m_mqttClientCtrl->
-    }
-  }
-
-  void notifyMqttConnected(bool isMqttConnected)
-  {
-    if (isMqttConnected)
-    {
-      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
-    }
-    else
-    {
-      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: OFF");
     }
   }
 
