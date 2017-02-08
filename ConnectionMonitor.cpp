@@ -56,7 +56,7 @@ public:
 //-----------------------------------------------------------------------------
 
 ConnMonAdapter::ConnMonAdapter()
-: m_trPort(new DbgTrace_Port("lanmon", DbgTrace_Level::info))
+: m_trPort(new DbgTrace_Port("conmon", DbgTrace_Level::info))
 { }
 
 ConnMonAdapter::~ConnMonAdapter()
@@ -76,7 +76,7 @@ bool ConnMonAdapter::lanConnectedRaw()
 #ifdef ESP8266
   isLanConnected = WiFi.isConnected();
 #endif
-  TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isLanConnected ? "WiFi is connected" : "WiFi is disconnected"));
+  TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isLanConnected ? "WiFi device is connected" : "WiFi device is disconnected"));
   return isLanConnected;
 }
 
@@ -88,7 +88,7 @@ bool ConnMonAdapter::mqttConnectedRaw()
 //-----------------------------------------------------------------------------
 
 const unsigned long cStatusPollIntervalMillis  = 1000;
-const unsigned long cStableCheckIntervalMillis = 1000;
+const unsigned long cStableCheckIntervalMillis = 2000;
 
 ConnectionMonitor::ConnectionMonitor(ConnMonAdapter* adapter)
 : m_statusPollTimer(new Timer(new StatusPollTimerAdapter(this), Timer::IS_RECURRING, cStatusPollIntervalMillis))
@@ -132,6 +132,16 @@ bool ConnectionMonitor::isLanDeviceConnected()
   if (0 != m_adapter)
   {
     isConn = m_adapter->lanConnectedRaw();
+  }
+  return isConn;
+}
+
+bool ConnectionMonitor::isMqttLibConnected()
+{
+  bool isConn = false;
+  if (0 != m_adapter)
+  {
+    isConn = m_adapter->mqttConnectedRaw();
   }
   return isConn;
 }
@@ -255,7 +265,6 @@ void ConnMonState_LanConnected::timeExpired(ConnectionMonitor* monitor)
 {
   if (monitor->isLanDeviceConnected())
   {
-    monitor->adapter()->notifyLanConnected(true);
     monitor->changeState(ConnMonState_StableLanConnection::Instance());
   }
   else
@@ -292,7 +301,7 @@ void ConnMonState_StableLanConnection::evaluateState(ConnectionMonitor* monitor)
 {
   if (monitor->isLanDeviceConnected())
   {
-    if (monitor->isMqttConnected())
+    if (monitor->isMqttLibConnected())
     {
       monitor->changeState(ConnMonState_MqttConnected::Instance());
     }
@@ -314,6 +323,7 @@ void ConnMonState_StableLanConnection::evaluateState(ConnectionMonitor* monitor,
 void ConnMonState_StableLanConnection::entry(ConnectionMonitor* monitor)
 {
   ConnMonState::entry(monitor);
+  monitor->adapter()->notifyLanConnected(true);
 }
 
 const char* ConnMonState_StableLanConnection::toString()
@@ -338,10 +348,10 @@ void ConnMonState_MqttConnected::evaluateState(ConnectionMonitor* monitor)
 {
   if (monitor->isLanDeviceConnected())
   {
-    if (!monitor->isMqttConnected())
+    if (!monitor->isMqttLibConnected())
     {
-      monitor->adapter()->notifyMqttConnected(false);
       monitor->changeState(ConnMonState_StableLanConnection::Instance());
+      monitor->adapter()->notifyMqttConnected(false);
     }
   }
   else
@@ -354,7 +364,7 @@ void ConnMonState_MqttConnected::evaluateState(ConnectionMonitor* monitor, bool 
 {
   if (!mqttState)
   {
-    monitor->changeState(ConnMonState_StableLanConnection::Instance());
+    monitor->changeState(ConnMonState_LanConnected::Instance());
   }
 }
 

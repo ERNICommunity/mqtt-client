@@ -45,6 +45,7 @@ public:
     if (0 != m_mqttClientCtrl)
     {
       isMqttConnected = m_mqttClientCtrl->mqttClientWrapper()->connected();
+      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isMqttConnected ? "MQTT lib is connected" : "MQTT lib is disconnected"));
     }
     return isMqttConnected;
   }
@@ -57,10 +58,14 @@ public:
       if (m_mqttClientCtrl->getShallConnect() && !m_mqttClientCtrl->connMon()->isMqttConnected())
       {
         // possible workaround for a possible PubSubClient bug:
-        m_mqttClientCtrl->mqttClientWrapper()->disconnect();
         m_mqttClientCtrl->mqttClientWrapper()->client().flush();
 
-        m_mqttClientCtrl->loop();
+        const int nbrOfLoops = 10;
+        for (int i = 0; i < nbrOfLoops; i++)
+        {
+          m_mqttClientCtrl->loop();
+        }
+
         m_mqttClientCtrl->connect();
       }
     }
@@ -137,9 +142,9 @@ IMqttClientWrapper* MqttClientController::mqttClientWrapper()
 void MqttClientController::setShallConnect(bool shallConnect)
 {
   m_shallConnect = shallConnect;
+  m_connMon->setMqttState(shallConnect);
   if (!shallConnect)
   {
-    m_connMon->setMqttState(false);
     s_mqttClientWrapper->disconnect();
   }
 }
@@ -151,8 +156,7 @@ bool MqttClientController::getShallConnect()
 
 void MqttClientController::connect()
 {
-  const char* mqttClientId = "wiring-iot-skeleton";
-  s_mqttClientWrapper->connect(mqttClientId);
+  s_mqttClientWrapper->connect(WiFi.macAddress().c_str());
 }
 
 ConnectionMonitor* MqttClientController::connMon()

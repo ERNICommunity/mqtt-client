@@ -39,6 +39,7 @@ public:
   virtual ~ConnectionMonitor();
   ConnMonAdapter* adapter();
   bool isLanDeviceConnected();
+  bool isMqttLibConnected();
   bool isLanConnected();
   bool isMqttConnected();
   void evaluateState();
