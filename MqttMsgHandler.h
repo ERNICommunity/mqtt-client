@@ -18,7 +18,7 @@ public:
   MqttMsgHandler(const char* topic);
   virtual ~MqttMsgHandler();
 
-  virtual void handleMessage(const char* topic, byte* payload, unsigned int length) = 0;
+  virtual void handleMessage(const char* topic, unsigned char* payload, unsigned int length) = 0;
 
   void addHandler(MqttMsgHandler* handler);
 
@@ -51,7 +51,7 @@ class DefaultMqttMsgHandler : public MqttMsgHandler
 public:
   DefaultMqttMsgHandler(const char* topic);
 
-  virtual void handleMessage(const char* topic, byte* payload, unsigned int length);
+  virtual void handleMessage(const char* topic, unsigned char* payload, unsigned int length);
 
 private:
   // forbidden default functions

@@ -18,7 +18,7 @@ protected:
 public:
   virtual ~IMqttClientCallbackAdapter() { }
 
-  virtual void messageReceived(char* topic, byte* payload, unsigned int length) = 0;
+  virtual void messageReceived(char* topic, unsigned char* payload, unsigned int length) = 0;
 };
 
 class IMqttClientWrapper

@@ -31,7 +31,7 @@ PubSubClientWrapper::PubSubClientWrapper(Client& lanClient, const char* mqttServ
 PubSubClientWrapper::~PubSubClientWrapper()
 { }
 
-void pubSubClientCallback(char* topic, byte* payload, unsigned int length)
+void pubSubClientCallback(char* topic, unsigned char* payload, unsigned int length)
 {
   if ((0 != PubSubClientWrapper::s_pubSubClientWrapper) && (0 != PubSubClientWrapper::s_pubSubClientWrapper->callbackAdapter()))
   {
@@ -126,7 +126,7 @@ PubSubClientCallbackAdapter::~PubSubClientCallbackAdapter()
   m_trPortMqttRx = 0;
 }
 
-void PubSubClientCallbackAdapter::messageReceived(char* topic, byte* payload, unsigned int length)
+void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* payload, unsigned int length)
 {
   char msg[length+1];
   memcpy(msg, payload, length);
