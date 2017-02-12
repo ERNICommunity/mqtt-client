@@ -54,6 +54,7 @@ public:
    * Publish data in a message to the mentioned MQTT Topic.
    * @param topic The MQTT topic to publish to
    * @param data  The data to be published
+   * @return
    */
   virtual unsigned char publish(const char* topic, const char* data) = 0;
 
