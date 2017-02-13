@@ -10,10 +10,12 @@
 
 class Client;
 class IMqttClientWrapper;
+class IMqttClientCallbackAdapter;
 class PubSubClientWrapper;
 class Timer;
-
-//const unsigned short int defaultMqttPort = 1883;
+class ConnectionMonitor;
+class DbgTrace_Port;
+class MqttMsgHandler;
 
 class MqttClientController
 {
@@ -23,10 +25,11 @@ private:
   MqttClientController();
 public:
   static MqttClientController* Instance();
-public:
+
   virtual ~MqttClientController();
 
-  static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper);
+  static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
+  static IMqttClientWrapper* mqttClientWrapper();
 
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
@@ -35,17 +38,26 @@ public:
 
   int publish(const char* topic, const char* data);
   int subscribe(const char* topic);
+  int subscribe(MqttMsgHandler* mqttMsgHandler);
   int unsubscribe(const char* topic);
 
-protected:
   void connect();
-  void reconnect();
+
+  ConnectionMonitor* connMon();
+  DbgTrace_Port* trPort();
+
+  MqttMsgHandler* msgHandlerChain();
+
+private:
+  void addMsgHandler(MqttMsgHandler* handler);
 
 private:
   static MqttClientController* s_instance;
   static IMqttClientWrapper*   s_mqttClientWrapper;
-  Timer* m_reconnectTimer;
-  bool m_isConnected;
+  bool m_shallConnect;
+  DbgTrace_Port* m_trPortMqttctrl;
+  ConnectionMonitor* m_connMon;
+  MqttMsgHandler* m_handlerChain;
 
 private: // forbidden default functions
   MqttClientController& operator = (const MqttClientController& src); // assignment operator
