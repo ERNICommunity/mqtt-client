@@ -18,13 +18,19 @@ public:
   MqttMsgHandler(const char* topic);
   virtual ~MqttMsgHandler();
 
-  virtual void handleMessage(const char* topic, unsigned char* payload, unsigned int length) = 0;
+  void handleMessage(const char* topic, unsigned char* payload, unsigned int length);
+
+  virtual bool processMessage() = 0;
 
   void addHandler(MqttMsgHandler* handler);
 
-  bool isMyTopic(const char* topic);
+  bool isMyTopic() const;
 
-  const char* getTopic();
+  const char* getTopic() const;
+
+  const char* getRxTopic() const;
+
+  const char* getRxMsg() const;
 
   void subscribe();
 
@@ -32,6 +38,10 @@ public:
 
 private:
   char* m_topic;
+  char* m_rxTopic;
+  char* m_rxMsg;
+  static const unsigned int s_maxRxTopicSize;
+  static const unsigned int s_maxRxMsgSize;
   MqttMsgHandler* m_next;
 
 private:
@@ -51,7 +61,7 @@ class DefaultMqttMsgHandler : public MqttMsgHandler
 public:
   DefaultMqttMsgHandler(const char* topic);
 
-  virtual void handleMessage(const char* topic, unsigned char* payload, unsigned int length);
+  virtual bool processMessage();
 
 private:
   // forbidden default functions
