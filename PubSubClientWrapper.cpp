@@ -139,6 +139,6 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* pa
   MqttMsgHandler* msgHandlerChain = MqttClientController::Instance()->msgHandlerChain();
   if (0 != msgHandlerChain)
   {
-    MqttClientController::Instance()->msgHandlerChain()->handleMessage(topic, payload, length);
+    msgHandlerChain->handleMessage(topic, payload, length, m_trPortMqttRx);
   }
 }

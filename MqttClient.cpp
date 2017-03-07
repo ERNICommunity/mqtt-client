@@ -39,8 +39,6 @@ MqttClient::MqttClient(const char* mqttServerAddr, unsigned short int mqttPort, 
   }
 }
 
-
-
 MqttClient::~MqttClient()
 { }
 

@@ -7,9 +7,9 @@
 
 #include <Arduino.h>
 #include <string.h>
-
+#include <DbgTracePort.h>
+#include <DbgTraceLevel.h>
 #include "MqttMsgHandler.h"
-
 #include "MqttClientController.h"
 
 const unsigned int MqttMsgHandler::s_maxRxTopicSize = 100;
@@ -77,7 +77,7 @@ const char* MqttMsgHandler::getRxMsg() const
   return m_rxMsg;
 }
 
-void MqttMsgHandler::handleMessage(const char* topic, unsigned char* payload, unsigned int length)
+void MqttMsgHandler::handleMessage(const char* topic, unsigned char* payload, unsigned int length, DbgTrace_Port* trPortMqttRx)
 {
   if (length > s_maxRxMsgSize)
   {
@@ -94,18 +94,18 @@ void MqttMsgHandler::handleMessage(const char* topic, unsigned char* payload, un
   memcpy(m_rxTopic, 0, len);
   m_rxTopic[len] = 0;
 
-  // TODO nid: trPort
-//  Serial.print("LED test handler, topic: ");
-//  Serial.print(getTopic());
-//  Serial.print(", msg: ");
-//  Serial.println(msg);
+  if (0 != trPortMqttRx)
+  {
+    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttMsgHandler::handleMessage(), topic: ");
+    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, getTopic());
+  }
 
   bool msgHasBeenHandled = processMessage();
   if (!msgHasBeenHandled)
   {
     if (0 != next())
     {
-      next()->handleMessage(topic, payload, length);
+      next()->handleMessage(topic, payload, length, trPortMqttRx);
     }
   }
 }

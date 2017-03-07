@@ -52,7 +52,7 @@ public:
 
   void notifyLanConnected(bool isLanConnected)
   {
-    if (isLanConnected)
+    if (isLanConnected && (0 != m_mqttClientCtrl) && (0 != m_mqttClientCtrl->connMon()))
     {
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: ON");
       if (m_mqttClientCtrl->getShallConnect() && !m_mqttClientCtrl->connMon()->isMqttConnected())
@@ -82,7 +82,11 @@ public:
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
 
       // subscribe to topics
-      m_mqttClientCtrl->msgHandlerChain()->subscribe();
+      MqttMsgHandler* msgHandlerChain = m_mqttClientCtrl->msgHandlerChain();
+      if (0 != msgHandlerChain)
+      {
+        m_mqttClientCtrl->msgHandlerChain()->subscribe();
+      }
     }
     else
     {

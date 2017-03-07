@@ -8,6 +8,8 @@
 #ifndef LIB_MQTT_CLIENT_MQTTMSGHANDLER_H_
 #define LIB_MQTT_CLIENT_MQTTMSGHANDLER_H_
 
+class DbgTrace_Port;
+
 /**
  * Abstract handler for received MQTT messages from subscribed topics.
  * This is an implementation according the GOF Chain-of-responsibility pattern Pattern
@@ -18,7 +20,7 @@ public:
   MqttMsgHandler(const char* topic);
   virtual ~MqttMsgHandler();
 
-  void handleMessage(const char* topic, unsigned char* payload, unsigned int length);
+  void handleMessage(const char* topic, unsigned char* payload, unsigned int length, DbgTrace_Port* trPortMqttRx = 0);
 
   virtual bool processMessage() = 0;
 
