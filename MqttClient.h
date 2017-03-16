@@ -10,7 +10,7 @@
 
 class Client;
 class MqttClientController;
-class MqttMsgHandler;
+class MqttTopicSubscriber;
 
 /**
  * MQTT Client Library API class.
@@ -20,11 +20,12 @@ class MqttClient
 public:
   /**
    * Constructor. Automatically starts trying to connect to the given Broker.
-   * @param mqttServerAddr MQTT Broker address.
-   * @param mqttPort MQTT Port (default 1883)
-   * @param lanClient (default: WiFI Client will be created
+   * @param mqttServerAddr MQTT broker address.
+   * @param mqttPort MQTT port (default 1883)
+   * @param lanClient (default: WiFi Client will be created
    */
   MqttClient(const char* mqttServerAddr, unsigned short int mqttPort = s_defaultMqttPort, Client* lanClient = 0);
+
 
   /**
    * Destructor.
@@ -35,7 +36,7 @@ public:
   bool getShallConnect();
 
   /**
-   * Kick function to be called from Arduino Framework loop() function.
+   * Kick function to be called from Arduino Framework loop() function in order to keep the message processing going.
    */
   void loop();
 
@@ -46,7 +47,7 @@ public:
    * @return
    */
   int publish(const char* topic, const char* data);
-  int subscribe(MqttMsgHandler* mqttMsgHandler);
+  int subscribe(MqttTopicSubscriber* mqttSubscriber);
   int unsubscribe(const char* topic);
 
 private:
@@ -55,6 +56,7 @@ private:
 
 
 private: // forbidden default functions
+  MqttClient();                                   // default constructor
   MqttClient& operator = (const MqttClient& src); // assignment operator
   MqttClient(const MqttClient& src);              // copy constructor
 };

@@ -13,12 +13,12 @@
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <PubSubClient.h>
-#include <MqttMsgHandler.h>
+#include "MqttTopic.h"
 #include <MqttClientController.h>
 
 #include <PubSubClientWrapper.h>
 
-PubSubClientWrapper* PubSubClientWrapper::s_pubSubClientWrapper = 0;
+IMqttClientWrapper* PubSubClientWrapper::s_pubSubClientWrapper = 0;
 
 PubSubClientWrapper::PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
 : m_client(lanClient)
@@ -33,9 +33,14 @@ PubSubClientWrapper::~PubSubClientWrapper()
 
 void pubSubClientCallback(char* topic, unsigned char* payload, unsigned int length)
 {
-  if ((0 != PubSubClientWrapper::s_pubSubClientWrapper) && (0 != PubSubClientWrapper::s_pubSubClientWrapper->callbackAdapter()))
+  IMqttClientWrapper* pubSubWrapper = PubSubClientWrapper::s_pubSubClientWrapper;
+  if (0 != pubSubWrapper)
   {
-    PubSubClientWrapper::s_pubSubClientWrapper->callbackAdapter()->messageReceived(topic, payload, length);
+    IMqttClientCallbackAdapter* callbackAdapter = pubSubWrapper->callbackAdapter();
+    if (0 != callbackAdapter)
+    {
+      callbackAdapter->messageReceived(topic, payload, length);
+    }
   }
 }
 
@@ -71,7 +76,7 @@ bool PubSubClientWrapper::connected()
   return m_pubSubClient->connected();
 }
 
-bool PubSubClientWrapper::processMessages()
+bool PubSubClientWrapper::loop()
 {
   return m_pubSubClient->loop();
 }
@@ -118,10 +123,14 @@ IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
 
 PubSubClientCallbackAdapter::PubSubClientCallbackAdapter()
 : m_trPortMqttRx(new DbgTrace_Port("mqttrx", DbgTrace_Level::info))
+, m_rxMsg(new MqttRxMsg())
 { }
 
 PubSubClientCallbackAdapter::~PubSubClientCallbackAdapter()
 {
+  delete m_rxMsg;
+  m_rxMsg = 0;
+
   delete m_trPortMqttRx;
   m_trPortMqttRx = 0;
 }
@@ -132,13 +141,15 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* pa
   memcpy(msg, payload, length);
   msg[length] = 0;
 
-  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, "Message arrived, topic:");
-  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, topic);
-  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::debug, msg);
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::info, "Message arrived, topic:");
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::info, topic);
+  TR_PRINT_STR(m_trPortMqttRx, DbgTrace_Level::info, msg);
 
-  MqttMsgHandler* msgHandlerChain = MqttClientController::Instance()->msgHandlerChain();
-  if (0 != msgHandlerChain)
+  m_rxMsg->prepare(topic, payload, length);
+
+  MqttTopicSubscriber* mqttSubscriberChain = MqttClientController::Instance()->mqttSubscriberChain();
+  if (0 != mqttSubscriberChain)
   {
-    msgHandlerChain->handleMessage(topic, payload, length, m_trPortMqttRx);
+    mqttSubscriberChain->handleMessage(m_rxMsg, m_trPortMqttRx);
   }
 }

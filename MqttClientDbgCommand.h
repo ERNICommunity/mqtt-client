@@ -76,4 +76,16 @@ public:
 
 //-----------------------------------------------------------------------------
 
+class DbgCli_Cmd_MqttClientShow : public DbgCli_Command
+{
+private:
+  MqttClientController* m_mqttClient;
+public:
+  DbgCli_Cmd_MqttClientShow(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient);
+  void execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle);
+  void printUsage();
+};
+
+//-----------------------------------------------------------------------------
+
 #endif /* LIB_MQTT_CLIENT_MQTTCLIENTDBGCOMMAND_H_ */

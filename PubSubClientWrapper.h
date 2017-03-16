@@ -8,10 +8,11 @@
 #ifndef LIB_MQTT_CLIENT_PUBSUBCLIENTWRAPPER_H_
 #define LIB_MQTT_CLIENT_PUBSUBCLIENTWRAPPER_H_
 
-#include "IMqttClientWrapper.h"
+#include <IMqttClientWrapper.h>
 
 class PubSubClient;
 class DbgTrace_Port;
+class MqttRxMsg;
 
 const unsigned short int defaultMqttPort = 1883;
 
@@ -24,7 +25,7 @@ public:
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
   Client& client();
-  bool processMessages();
+  bool loop();
   bool connect(const char* id);
   void disconnect();
   bool connected();
@@ -34,7 +35,7 @@ public:
   eIMqttClientState state();
 
 public:
-  static PubSubClientWrapper* s_pubSubClientWrapper;
+  static IMqttClientWrapper* s_pubSubClientWrapper;
 
 private:
   Client& m_client;
@@ -53,6 +54,7 @@ class PubSubClientCallbackAdapter : public IMqttClientCallbackAdapter
 {
 private:
   DbgTrace_Port* m_trPortMqttRx;
+  MqttRxMsg*     m_rxMsg;
 
 public:
   PubSubClientCallbackAdapter();

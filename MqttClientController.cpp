@@ -20,7 +20,7 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
-#include <MqttMsgHandler.h>
+#include "MqttTopic.h"
 #include <ConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
 #include <MqttClientDbgCommand.h>
@@ -82,10 +82,10 @@ public:
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
 
       // subscribe to topics
-      MqttMsgHandler* msgHandlerChain = m_mqttClientCtrl->msgHandlerChain();
+      MqttTopicSubscriber* msgHandlerChain = m_mqttClientCtrl->mqttSubscriberChain();
       if (0 != msgHandlerChain)
       {
-        m_mqttClientCtrl->msgHandlerChain()->subscribe();
+        m_mqttClientCtrl->mqttSubscriberChain()->subscribe();
       }
     }
     else
@@ -113,7 +113,7 @@ MqttClientController::MqttClientController()
 : m_shallConnect(false)
 , m_trPortMqttctrl(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
 , m_connMon(new ConnectionMonitor(new MyConnMonAdapter(this)))
-, m_handlerChain(0)
+, m_mqttSubscriberChain(0)
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -121,6 +121,7 @@ MqttClientController::MqttClientController()
   new DbgCli_Cmd_MqttClientPub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientSub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientUnsub(mqttClientTopic, this);
+  new DbgCli_Cmd_MqttClientShow(mqttClientTopic, this);
 }
 
 MqttClientController::~MqttClientController()
@@ -177,7 +178,7 @@ void MqttClientController::loop()
 {
   if (m_connMon->isMqttConnected())
   {
-    bool mqttIsConnected = s_mqttClientWrapper->processMessages();
+    bool mqttIsConnected = s_mqttClientWrapper->loop();
     m_connMon->setMqttState(mqttIsConnected);
   }
 }
@@ -193,10 +194,10 @@ int MqttClientController::subscribe(const char* topic)
   return s_mqttClientWrapper->subscribe(topic);
 }
 
-int MqttClientController::subscribe(MqttMsgHandler* mqttMsgHandler)
+int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
 {
-  addMsgHandler(mqttMsgHandler);
-  return s_mqttClientWrapper->subscribe(mqttMsgHandler->getTopic());
+  addMqttSubscriber(mqttSubscriber);
+  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopic());
 }
 
 int MqttClientController::unsubscribe(const char* topic)
@@ -205,19 +206,22 @@ int MqttClientController::unsubscribe(const char* topic)
   return s_mqttClientWrapper->unsubscribe(topic);
 }
 
-MqttMsgHandler* MqttClientController::msgHandlerChain()
+MqttTopicSubscriber* MqttClientController::mqttSubscriberChain()
 {
-  return m_handlerChain;
+  return m_mqttSubscriberChain;
 }
 
-void MqttClientController::addMsgHandler(MqttMsgHandler* handler)
+void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber)
 {
-  if (0 == m_handlerChain)
+  if (0 == m_mqttSubscriberChain)
   {
-    m_handlerChain = handler;
+    m_mqttSubscriberChain = mqttSubscriber;
+    Serial.print("MqttClientController::addMqttSubscriber(), added first mqttSubscriber: ");
   }
   else
   {
-    m_handlerChain->addHandler(handler);
+    m_mqttSubscriberChain->addMqttSubscriber(mqttSubscriber);
+    Serial.print("MqttClientController::addMqttSubscriber(), added mqttSubscriber: ");
   }
+  Serial.println(mqttSubscriber->getTopic());
 }
