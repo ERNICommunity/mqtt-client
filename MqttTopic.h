@@ -60,10 +60,12 @@ public:
 
   const char* getRxTopic() const;
   const char* getRxMsg() const;
+  const unsigned int getRxMsgSize() const;
 
 private:
   char* m_rxTopic;
   char* m_rxMsg;
+  unsigned int m_rxMsgSize;
 
 public:
   static const unsigned int s_maxRxTopicSize;

@@ -48,6 +48,7 @@ const unsigned int MqttRxMsg::s_maxRxMsgSize   = 500;
 MqttRxMsg::MqttRxMsg()
 : m_rxTopic(new char[s_maxRxTopicSize+1])
 , m_rxMsg(new char[s_maxRxMsgSize+1])
+, m_rxMsgSize(0)
 {
   memset(m_rxTopic, 0, s_maxRxTopicSize+1);
   memset(m_rxMsg,   0, s_maxRxMsgSize+1);
@@ -66,10 +67,14 @@ void MqttRxMsg::prepare(const char* topic, unsigned char* payload, unsigned int 
 {
   if (length > s_maxRxMsgSize)
   {
-    length = s_maxRxMsgSize;
+    m_rxMsgSize = s_maxRxMsgSize;
+  }
+  else
+  {
+    m_rxMsgSize = length;
   }
   memcpy(m_rxMsg, payload, length);
-  m_rxMsg[length] = 0;
+  m_rxMsg[m_rxMsgSize] = 0;
 
   unsigned int len = strlen(topic)+1;
   if (len > s_maxRxTopicSize+1)
@@ -88,6 +93,11 @@ const char* MqttRxMsg::getRxTopic() const
 const char* MqttRxMsg::getRxMsg() const
 {
   return m_rxMsg;
+}
+
+const unsigned int MqttRxMsg::getRxMsgSize() const
+{
+  return m_rxMsgSize;
 }
 
 //-----------------------------------------------------------------------------
