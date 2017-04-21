@@ -10,16 +10,58 @@
 
 class DbgTrace_Port;
 
+class TopicLevel
+{
+public:
+  TopicLevel(const char* level, unsigned int idx);
+  virtual ~TopicLevel();
+
+  TopicLevel* next();
+  const char* level() const;
+  unsigned int idx() const;
+
+  void append(TopicLevel* level);
+
+  enum WildcardType {  eTWC_None   = 0,
+                            eTWC_Single = 1,
+                            eTWC_Multi  = 2  };
+
+  WildcardType getWildcardType();
+
+private:
+  const unsigned int m_idx;
+  const unsigned int m_levelSize;
+  char* m_level;
+  WildcardType m_wcType;
+  TopicLevel* m_next;
+private:
+  // forbidden default functions
+  TopicLevel();                                   // default constructor
+  TopicLevel& operator = (const TopicLevel& src); // assignment operator
+  TopicLevel(const TopicLevel& src);              // copy constructor
+};
+
+//-----------------------------------------------------------------------------
+
 class MqttTopic
 {
 public:
   MqttTopic(const char* topic);
   virtual ~MqttTopic();
 
-  const char* getTopic() const;
+  const char* getTopicString() const;
+  TopicLevel* getLevelList() const;
+  bool hasWildcards() const;
+
+protected:
+  void appendLevel(TopicLevel* level);
+
 private:
   char* m_topic;
-
+  unsigned int m_topicLevelCount;
+  static const unsigned int s_maxNumOfTopicLevels;
+  TopicLevel* m_levelList;
+  bool m_hasWildcards;
 
 private:
   // forbidden default functions
@@ -58,17 +100,16 @@ public:
 
   void prepare(const char* topic, unsigned char* payload, unsigned int length);
 
-  const char* getRxTopic() const;
-  const char* getRxMsg() const;
+  MqttTopic* getRxTopic() const;
+  const char* getRxMsgString() const;
   const unsigned int getRxMsgSize() const;
 
 private:
-  char* m_rxTopic;
+  MqttTopic* m_rxTopic;
   char* m_rxMsg;
   unsigned int m_rxMsgSize;
 
 public:
-  static const unsigned int s_maxRxTopicSize;
   static const unsigned int s_maxRxMsgSize;
 
 private:
@@ -103,7 +144,7 @@ private:
 
 private:
   // forbidden default functions
-  MqttTopicSubscriber();                                       // default constructor
+  MqttTopicSubscriber();                                            // default constructor
   MqttTopicSubscriber& operator = (const MqttTopicSubscriber& src); // assignment operator
   MqttTopicSubscriber(const MqttTopicSubscriber& src);              // copy constructor
 };

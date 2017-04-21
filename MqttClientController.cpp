@@ -197,7 +197,7 @@ int MqttClientController::subscribe(const char* topic)
 int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
 {
   addMqttSubscriber(mqttSubscriber);
-  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopic());
+  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopicString());
 }
 
 int MqttClientController::unsubscribe(const char* topic)
@@ -223,5 +223,5 @@ void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber
     m_mqttSubscriberChain->addMqttSubscriber(mqttSubscriber);
     Serial.print("MqttClientController::addMqttSubscriber(), added mqttSubscriber: ");
   }
-  Serial.println(mqttSubscriber->getTopic());
+  Serial.println(mqttSubscriber->getTopicString());
 }
