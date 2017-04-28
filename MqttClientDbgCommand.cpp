@@ -16,7 +16,7 @@
 #include <MqttClientController.h>
 #include <MqttClientDbgCommand.h>
 
-#include "MqttMsgHandler.h"
+#include "MqttTopic.h"
 
 //-----------------------------------------------------------------------------
 
@@ -123,7 +123,7 @@ void DbgCli_Cmd_MqttClientSub::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      int retVal = m_mqttClient->subscribe(new DefaultMqttMsgHandler(args[idxToFirstArgToHandle]));
+      int retVal = m_mqttClient->subscribe(new DefaultMqttSubscriber(args[idxToFirstArgToHandle]));
       Serial.print("MQTT client, subscribe ");
       Serial.println(retVal == 1 ? "successful" : "failed");
     }
@@ -168,5 +168,24 @@ void DbgCli_Cmd_MqttClientUnsub::printUsage()
 
 //-----------------------------------------------------------------------------
 
+DbgCli_Cmd_MqttClientShow::DbgCli_Cmd_MqttClientShow(DbgCli_Topic* mqttClientTopic, MqttClientController* mqttClient)
+: DbgCli_Command(mqttClientTopic, "show", "Show info from the MQTT client.")
+, m_mqttClient(mqttClient)
+{ }
+
+void DbgCli_Cmd_MqttClientShow::execute(unsigned int argc, const char** args, unsigned int idxToFirstArgToHandle)
+{
+  Serial.println("Subscriber Topics:");
+  MqttTopicSubscriber* subscriber = m_mqttClient->mqttSubscriberChain();
+  if (0 == subscriber)
+  {
+    Serial.println("no subscribers in the list.");
+  }
+  while (0 != subscriber)
+  {
+    Serial.println(subscriber->getTopic());
+    subscriber = subscriber->next();
+  }
+}
 
 //-----------------------------------------------------------------------------

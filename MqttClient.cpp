@@ -12,7 +12,7 @@
 #endif
 #include "MqttClient.h"
 #include <MqttClientController.h>
-#include <MqttMsgHandler.h>
+#include "MqttTopic.h"
 #include <PubSubClientWrapper.h>
 
 
@@ -38,8 +38,6 @@ MqttClient::MqttClient(const char* mqttServerAddr, unsigned short int mqttPort, 
     m_clientController = 0;
   }
 }
-
-
 
 MqttClient::~MqttClient()
 { }
@@ -80,12 +78,12 @@ int MqttClient::publish(const char* topic, const char* data)
   return result;
 }
 
-int MqttClient::subscribe(MqttMsgHandler* mqttMsgHandler)
+int MqttClient::subscribe(MqttTopicSubscriber* mqttSubscriber)
 {
   int result = 0;
   if (0 != m_clientController)
   {
-    result = m_clientController->subscribe(mqttMsgHandler);
+    result = m_clientController->subscribe(mqttSubscriber);
   }
   return result;
 }
