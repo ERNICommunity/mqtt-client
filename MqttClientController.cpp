@@ -20,7 +20,7 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
-#include "MqttTopic.h"
+#include <MqttTopic.h>
 #include <ConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
 #include <MqttClientDbgCommand.h>
@@ -82,10 +82,17 @@ public:
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
 
       // subscribe to topics
-      MqttTopicSubscriber* msgHandlerChain = m_mqttClientCtrl->mqttSubscriberChain();
-      if (0 != msgHandlerChain)
+      MqttTopicSubscriber* subscriberChain = m_mqttClientCtrl->mqttSubscriberChain();
+      if (0 != subscriberChain)
       {
-        m_mqttClientCtrl->mqttSubscriberChain()->subscribe();
+        subscriberChain->subscribe();
+      }
+
+      // publish the auto publisher topics
+      MqttTopicPublisher* publisherChain = m_mqttClientCtrl->mqttPublisherChain();
+      if (0 != publisherChain)
+      {
+        publisherChain->publish();
       }
     }
     else
@@ -114,6 +121,7 @@ MqttClientController::MqttClientController()
 , m_trPortMqttctrl(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
 , m_connMon(new ConnectionMonitor(new MyConnMonAdapter(this)))
 , m_mqttSubscriberChain(0)
+, m_mqttPublisherChain(0)
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -188,27 +196,37 @@ int MqttClientController::publish(const char* topic, const char* data)
   return s_mqttClientWrapper->publish(topic, data);
 }
 
+void MqttClientController::installAutoPublisher(MqttTopicPublisher* mqttPublisher)
+{
+  addMqttPublisher(mqttPublisher);
+}
+
 int MqttClientController::subscribe(const char* topic)
 {
-//  addMsgHandler(new DefaultMqttMsgHandler(topic));
+//  addMqttSubscriber(new DefaultMqttSubscriber(topic));
   return s_mqttClientWrapper->subscribe(topic);
 }
 
 int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
 {
   addMqttSubscriber(mqttSubscriber);
-  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopic());
+  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopicString());
 }
 
 int MqttClientController::unsubscribe(const char* topic)
 {
-  // TODO: remove and delete the default handler object
+  // TODO: remove and delete the default subscriber object
   return s_mqttClientWrapper->unsubscribe(topic);
 }
 
 MqttTopicSubscriber* MqttClientController::mqttSubscriberChain()
 {
   return m_mqttSubscriberChain;
+}
+
+MqttTopicPublisher* MqttClientController::mqttPublisherChain()
+{
+  return m_mqttPublisherChain;
 }
 
 void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber)
@@ -223,5 +241,20 @@ void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber
     m_mqttSubscriberChain->addMqttSubscriber(mqttSubscriber);
     Serial.print("MqttClientController::addMqttSubscriber(), added mqttSubscriber: ");
   }
-  Serial.println(mqttSubscriber->getTopic());
+  Serial.println(mqttSubscriber->getTopicString());
+}
+
+void MqttClientController::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
+{
+  if (0 == m_mqttPublisherChain)
+  {
+    m_mqttPublisherChain = mqttPublisher;
+    Serial.print("MqttClientController::addMqttPublisher(), added first mqttPublisher: ");
+  }
+  else
+  {
+    m_mqttPublisherChain->addMqttPublisher(mqttPublisher);
+    Serial.print("MqttClientController::addMqttPublisher(), added mqttPublisher: ");
+  }
+  Serial.println(mqttPublisher->getTopicString());
 }
