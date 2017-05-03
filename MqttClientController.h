@@ -16,6 +16,7 @@ class Timer;
 class ConnectionMonitor;
 class DbgTrace_Port;
 class MqttTopicSubscriber;
+class MqttTopicPublisher;
 
 class MqttClientController
 {
@@ -37,8 +38,9 @@ public:
   void loop();
 
   int publish(const char* topic, const char* data);
+  void installAutoPublisher(MqttTopicPublisher* mqttPublisher);
   int subscribe(const char* topic);
-  int subscribe(MqttTopicSubscriber* mqttMsgHandler);
+  int subscribe(MqttTopicSubscriber* mqttSubscriber);
   int unsubscribe(const char* topic);
 
   void connect();
@@ -47,9 +49,12 @@ public:
   DbgTrace_Port* trPort();
 
   MqttTopicSubscriber* mqttSubscriberChain();
+  MqttTopicPublisher* mqttPublisherChain();
 
 private:
-  void addMqttSubscriber(MqttTopicSubscriber* handler);
+  void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);
+  void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
+
 
 private:
   static MqttClientController* s_instance;
@@ -58,6 +63,7 @@ private:
   DbgTrace_Port* m_trPortMqttctrl;
   ConnectionMonitor* m_connMon;
   MqttTopicSubscriber* m_mqttSubscriberChain;
+  MqttTopicPublisher* m_mqttPublisherChain;
 
 private: // forbidden default functions
   MqttClientController& operator = (const MqttClientController& src); // assignment operator

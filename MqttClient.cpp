@@ -12,7 +12,7 @@
 #endif
 #include "MqttClient.h"
 #include <MqttClientController.h>
-#include "MqttTopic.h"
+#include <MqttTopic.h>
 #include <PubSubClientWrapper.h>
 
 
@@ -78,6 +78,16 @@ int MqttClient::publish(const char* topic, const char* data)
   return result;
 }
 
+void MqttClient::installAutoPublisher(MqttTopicPublisher* mqttPublisher)
+{
+  m_clientController->installAutoPublisher(mqttPublisher);
+}
+
+//int MqttClient::subscribe(const char* topic)
+//{
+//  return m_clientController->subscribe(topic);
+//}
+//
 int MqttClient::subscribe(MqttTopicSubscriber* mqttSubscriber)
 {
   int result = 0;

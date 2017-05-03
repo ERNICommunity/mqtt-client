@@ -75,13 +75,21 @@ private:
 class MqttTopicPublisher : public MqttTopic
 {
 public:
-  MqttTopicPublisher(const char* topic);
+  MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublishOnConnectEnabled = false);
   virtual ~MqttTopicPublisher();
 
-  virtual void publish() { }
-  virtual void publish(const char* msg) { }
-  virtual void publish(int val) { }
-  virtual void publish(double val) { }
+  virtual void publish();
+  void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
+  MqttTopicPublisher* next();
+
+protected:
+  virtual int autoPublishOnConnect();
+
+private:
+  MqttTopicPublisher* m_next;
+  char* m_data;
+  bool m_isAutoPublishOnConnectEnabled;
+  static const unsigned int s_maxDataSize;
 
 private:
   // forbidden default functions
