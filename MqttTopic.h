@@ -166,9 +166,9 @@ class DefaultMqttSubscriber : public MqttTopicSubscriber
 {
 public:
   DefaultMqttSubscriber(const char* topic);
-
   virtual bool processMessage();
-
+private:
+  DbgTrace_Port* m_trPort;
 private:
   // forbidden default functions
   DefaultMqttSubscriber();                                              // default constructor

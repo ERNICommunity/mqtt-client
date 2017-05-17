@@ -45,7 +45,7 @@ public:
     if (0 != m_mqttClientCtrl)
     {
       isMqttConnected = m_mqttClientCtrl->mqttClientWrapper()->connected();
-      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isMqttConnected ? "MQTT lib is connected" : "MQTT lib is disconnected"));
+      TR_PRINTF(trPort(), DbgTrace_Level::debug, "MQTT client is %s", isMqttConnected ? "connected" : "disconnected");
     }
     return isMqttConnected;
   }

@@ -297,7 +297,6 @@ bool MqttTopicSubscriber::isMyTopic() const
   {
     if (hasWildcards())
     {
-      Serial.print("- has Wildcards - ");
       // handle smart compare
       bool stillMatch = true;
       TopicLevel* subscriberTopicLevel = getLevelList();
@@ -315,7 +314,6 @@ bool MqttTopicSubscriber::isMyTopic() const
     }
     else
     {
-      Serial.print("- has no Wildcards - ");
       if (strcmp(getTopicString(), m_rxMsg->getRxTopic()->getTopicString()) == 0)
       {
         ismytopic = true;
@@ -336,12 +334,7 @@ void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortM
   m_rxMsg = rxMsg;
   if ((0 != trPortMqttRx) && (0 != m_rxMsg) && (0 != m_rxMsg->getRxTopic()))
   {
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, getTopicString());
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), rx topic: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, m_rxMsg->getRxTopic()->getTopicString());
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), rx msg: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, m_rxMsg->getRxMsgString());
+    TR_PRINTF(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: %s, rx topic: %s, rx msg: %s", getTopicString(), m_rxMsg->getRxTopic()->getTopicString(), m_rxMsg->getRxMsgString());
   }
 
   bool msgHasBeenHandled = processMessage();
@@ -372,6 +365,7 @@ MqttTopicSubscriber* MqttTopicSubscriber::next()
 
 DefaultMqttSubscriber::DefaultMqttSubscriber(const char* topic)
 : MqttTopicSubscriber(topic)
+, m_trPort(new DbgTrace_Port("mqttdflt", DbgTrace_Level::debug))
 { }
 
 bool DefaultMqttSubscriber::processMessage()
@@ -381,13 +375,9 @@ bool DefaultMqttSubscriber::processMessage()
 
   if (isMyTopic() && (0 != rxMsg))
   {
-    msgHasBeenHandled = true;
-
     // take responsibility
-    Serial.print("DefaultMqttSubscriber: ");
-    Serial.print(rxMsg->getRxTopic()->getTopicString());
-    Serial.print(", ");
-    Serial.println(rxMsg->getRxMsgString());
+    msgHasBeenHandled = true;
+    TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttSubscriber (%s), rx: [%s] %s", getTopicString(), rxMsg->getRxTopic()->getTopicString(), rxMsg->getRxMsgString());
   }
 
   return msgHasBeenHandled;

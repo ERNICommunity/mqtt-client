@@ -76,7 +76,7 @@ bool ConnMonAdapter::lanConnectedRaw()
 #ifdef ESP8266
   isLanConnected = WiFi.isConnected();
 #endif
-  TR_PRINT_STR(trPort(), DbgTrace_Level::debug, (isLanConnected ? "WiFi device is connected" : "WiFi device is disconnected"));
+  TR_PRINTF(trPort(), DbgTrace_Level::debug, "WiFi device is %sconnected", (isLanConnected ? "" : "dis"));
   return isLanConnected;
 }
 
@@ -202,9 +202,7 @@ ConnMonState* ConnectionMonitor::prevState()
 
 void ConnMonState::entry(ConnectionMonitor* monitor)
 {
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, "FSM, entering: from state to state:");
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, monitor->prevState()->toString());
-  TR_PRINT_STR(monitor->adapter()->trPort(), DbgTrace_Level::info, monitor->state()->toString());
+  TR_PRINTF(monitor->adapter()->trPort(), DbgTrace_Level::info, "FSM, entering state %s [from %s]", monitor->state()->toString(), monitor->prevState()->toString());
 }
 
 //-----------------------------------------------------------------------------
