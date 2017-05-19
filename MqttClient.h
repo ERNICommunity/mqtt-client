@@ -11,6 +11,7 @@
 class Client;
 class MqttClientController;
 class MqttTopicSubscriber;
+class MqttTopicPublisher;
 
 /**
  * MQTT Client Library API class.
@@ -47,6 +48,8 @@ public:
    * @return
    */
   int publish(const char* topic, const char* data);
+  void installAutoPublisher(MqttTopicPublisher* mqttPublisher);
+//  int subscribe(const char* topic);
   int subscribe(MqttTopicSubscriber* mqttSubscriber);
   int unsubscribe(const char* topic);
 

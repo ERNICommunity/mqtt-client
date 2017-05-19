@@ -183,7 +183,7 @@ void DbgCli_Cmd_MqttClientShow::execute(unsigned int argc, const char** args, un
   }
   while (0 != subscriber)
   {
-    Serial.println(subscriber->getTopic());
+    Serial.println(subscriber->getTopicString());
     subscriber = subscriber->next();
   }
 }

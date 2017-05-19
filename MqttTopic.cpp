@@ -5,52 +5,225 @@
  *      Author: nid
  */
 
-#include "MqttTopic.h"
+#include <MqttTopic.h>
 
 #include <Arduino.h>
 #include <string.h>
+#include <stdio.h>
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
-#include "MqttClientController.h"
+#include <MqttClientController.h>
+
+//-----------------------------------------------------------------------------
+
+TopicLevel::TopicLevel(const char* level, unsigned int idx)
+: m_idx(idx)
+, m_levelSize(strlen(level)+1)
+, m_level(new char[m_levelSize])
+, m_wcType(eTWC_None)
+, m_next(0)
+{
+  strncpy(m_level, level, m_levelSize);
+
+  if (strncmp(m_level, "+", m_levelSize) == 0)
+  {
+    m_wcType = eTWC_Single;
+  }
+  else if (strncmp(level, "#", m_levelSize) == 0)
+  {
+    m_wcType = eTWC_Multi;
+  }
+}
+
+TopicLevel::~TopicLevel()
+{
+  delete m_next;
+  m_next = 0;
+
+  delete [] m_level;
+  m_level = 0;
+}
+
+void TopicLevel::append(TopicLevel* level)
+{
+  if (0 == m_next)
+  {
+    m_next = level;
+  }
+  else
+  {
+    m_next->append(level);
+  }
+}
+
+TopicLevel* TopicLevel::next()
+{
+  return m_next;
+}
+
+const char* TopicLevel::level() const
+{
+  return m_level;
+}
+
+unsigned int TopicLevel::idx() const
+{
+  return m_idx;
+}
+
+TopicLevel::WildcardType TopicLevel::getWildcardType()
+{
+  return m_wcType;
+}
+
+//-----------------------------------------------------------------------------
+
+const unsigned int MqttTopic::s_maxNumOfTopicLevels = 25;
 
 MqttTopic::MqttTopic(const char* topic)
 : m_topic(new char[strlen(topic)+1])
+, m_topicLevelCount(0)
+, m_levelList(0)
+, m_hasWildcards(false)
 {
   memset(m_topic, 0, strlen(topic)+1);
   strncpy(m_topic, topic, strlen(topic));
+
+  char tmpTopic[strlen(topic)+1];
+  memset(tmpTopic, 0, strlen(topic)+1);
+  strncpy(tmpTopic, topic, strlen(topic));
+
+  unsigned int i = 0;
+  TopicLevel* levelObj = 0;
+  char* level = strtok(tmpTopic, "/");
+  while (level != 0)
+  {
+    levelObj = new TopicLevel(level, i);
+    m_hasWildcards |= TopicLevel::eTWC_None != levelObj->getWildcardType();
+    appendLevel(levelObj);
+    level = strtok(0, "/");
+    i++;
+  }
+  m_topicLevelCount = i;
+
+//  Serial.print("Topic: ");
+//  Serial.print(m_topic);
+//  Serial.print(", #levels: ");
+//  Serial.print(m_topicLevelCount);
+//  Serial.print(", has ");
+//  Serial.print(!hasWildcards() ? "no " : "");
+//  Serial.println("Wildcards");
+
+//  levelObj = getLevelList();
+//  while(0 != levelObj)
+//  {
+//    Serial.print("[");
+//    Serial.print(levelObj->idx());
+//    Serial.print("] - ");
+//    Serial.println(levelObj->level());
+//    levelObj = levelObj->next();
+//  }
 }
 
 MqttTopic::~MqttTopic()
 {
+  delete m_levelList;
+  m_levelList = 0;
+
   delete [] m_topic;
   m_topic = 0;
 }
 
-const char* MqttTopic::getTopic() const
+const char* MqttTopic::getTopicString() const
 {
   return m_topic;
 }
 
+bool MqttTopic::hasWildcards() const
+{
+  return m_hasWildcards;
+}
+
+void MqttTopic::appendLevel(TopicLevel* level)
+{
+  if (0 == m_levelList)
+  {
+    m_levelList = level;
+  }
+  else
+  {
+    m_levelList->append(level);
+  }
+}
+
+TopicLevel* MqttTopic::getLevelList() const
+{
+  return m_levelList;
+}
+
 //-----------------------------------------------------------------------------
 
-MqttTopicPublisher::MqttTopicPublisher(const char* topic)
+const unsigned int MqttTopicPublisher::s_maxDataSize = 30;
+
+MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublishOnConnectEnabled)
 : MqttTopic(topic)
-{ }
+, m_next(0)
+, m_data(new char[s_maxDataSize+1])
+, m_isAutoPublishOnConnectEnabled(isAutoPublishOnConnectEnabled)
+{
+  memset(m_data, 0, s_maxDataSize+1);
+  strncpy(m_data, data, s_maxDataSize);
+}
 
 MqttTopicPublisher::~MqttTopicPublisher()
 { }
 
+void MqttTopicPublisher::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
+{
+  if (0 == m_next)
+  {
+    m_next = mqttPublisher;
+  }
+  else
+  {
+    m_next->addMqttPublisher(mqttPublisher);
+  }
+}
+
+void MqttTopicPublisher::publish()
+{
+  autoPublishOnConnect();
+  if (0 != next())
+  {
+    next()->publish();
+  }
+}
+
+int MqttTopicPublisher::autoPublishOnConnect()
+{
+  int r = 0;
+  if (m_isAutoPublishOnConnectEnabled)
+  {
+    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+  }
+  return r;
+}
+
+MqttTopicPublisher* MqttTopicPublisher::next()
+{
+  return m_next;
+}
+
 //-----------------------------------------------------------------------------
 
-const unsigned int MqttRxMsg::s_maxRxTopicSize = 100;
-const unsigned int MqttRxMsg::s_maxRxMsgSize   = 500;
+const unsigned int MqttRxMsg::s_maxRxMsgSize        = 500;
 
 MqttRxMsg::MqttRxMsg()
-: m_rxTopic(new char[s_maxRxTopicSize+1])
+: m_rxTopic(0)
 , m_rxMsg(new char[s_maxRxMsgSize+1])
+, m_rxMsgSize(0)
 {
-  memset(m_rxTopic, 0, s_maxRxTopicSize+1);
-  memset(m_rxMsg,   0, s_maxRxMsgSize+1);
+  memset(m_rxMsg, 0, s_maxRxMsgSize+1);
 }
 
 MqttRxMsg::~MqttRxMsg()
@@ -58,7 +231,7 @@ MqttRxMsg::~MqttRxMsg()
   delete [] m_rxMsg;
   m_rxMsg = 0;
 
-  delete [] m_rxTopic;
+  delete m_rxTopic;
   m_rxTopic = 0;
 }
 
@@ -66,28 +239,32 @@ void MqttRxMsg::prepare(const char* topic, unsigned char* payload, unsigned int 
 {
   if (length > s_maxRxMsgSize)
   {
-    length = s_maxRxMsgSize;
+    m_rxMsgSize = s_maxRxMsgSize;
+  }
+  else
+  {
+    m_rxMsgSize = length;
   }
   memcpy(m_rxMsg, payload, length);
-  m_rxMsg[length] = 0;
+  m_rxMsg[m_rxMsgSize] = 0;
 
-  unsigned int len = strlen(topic)+1;
-  if (len > s_maxRxTopicSize+1)
-  {
-    len = s_maxRxTopicSize+1;
-  }
-  strncpy(m_rxTopic, topic, len);
-  m_rxTopic[len] = 0;
-}
+  delete m_rxTopic;
+  m_rxTopic = new MqttTopic(topic);
+ }
 
-const char* MqttRxMsg::getRxTopic() const
+MqttTopic* MqttRxMsg::getRxTopic() const
 {
   return m_rxTopic;
 }
 
-const char* MqttRxMsg::getRxMsg() const
+const char* MqttRxMsg::getRxMsgString() const
 {
   return m_rxMsg;
+}
+
+const unsigned int MqttRxMsg::getRxMsgSize() const
+{
+  return m_rxMsgSize;
 }
 
 //-----------------------------------------------------------------------------
@@ -116,11 +293,31 @@ void MqttTopicSubscriber::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber)
 bool MqttTopicSubscriber::isMyTopic() const
 {
   bool ismytopic = false;
-  if (0 != m_rxMsg)
+  if ((0 != m_rxMsg) && (0 != m_rxMsg->getRxTopic()))
   {
-    if (strncmp(getTopic(), m_rxMsg->getRxTopic(), MqttRxMsg::s_maxRxTopicSize) == 0)
+    if (hasWildcards())
     {
-      ismytopic = true;
+      // handle smart compare
+      bool stillMatch = true;
+      TopicLevel* subscriberTopicLevel = getLevelList();
+      TopicLevel* rxTopicLevel = m_rxMsg->getRxTopic()->getLevelList();
+      while(stillMatch && (0 != subscriberTopicLevel) && (0 != rxTopicLevel))
+      {
+        if (TopicLevel::eTWC_None == subscriberTopicLevel->getWildcardType())
+        {
+          stillMatch &= (strcmp(subscriberTopicLevel->level(), rxTopicLevel->level()) == 0);
+        }
+        subscriberTopicLevel = subscriberTopicLevel->next();
+        rxTopicLevel = rxTopicLevel->next();
+      }
+      ismytopic = stillMatch;
+    }
+    else
+    {
+      if (strcmp(getTopicString(), m_rxMsg->getRxTopic()->getTopicString()) == 0)
+      {
+        ismytopic = true;
+      }
     }
   }
   return ismytopic;
@@ -135,14 +332,9 @@ MqttRxMsg* MqttTopicSubscriber::getRxMsg() const
 void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortMqttRx)
 {
   m_rxMsg = rxMsg;
-  if ((0 != trPortMqttRx) && (0 != m_rxMsg))
+  if ((0 != trPortMqttRx) && (0 != m_rxMsg) && (0 != m_rxMsg->getRxTopic()))
   {
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, getTopic());
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), rx topic: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, m_rxMsg->getRxTopic());
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), rx msg: ");
-    TR_PRINT_STR(trPortMqttRx, DbgTrace_Level::debug, m_rxMsg->getRxMsg());
+    TR_PRINTF(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: %s, rx topic: %s, rx msg: %s", getTopicString(), m_rxMsg->getRxTopic()->getTopicString(), m_rxMsg->getRxMsgString());
   }
 
   bool msgHasBeenHandled = processMessage();
@@ -157,7 +349,7 @@ void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortM
 
 void MqttTopicSubscriber::subscribe()
 {
-  MqttClientController::Instance()->subscribe(getTopic());
+  MqttClientController::Instance()->subscribe(getTopicString());
   if (0 != next())
   {
     next()->subscribe();
@@ -173,6 +365,7 @@ MqttTopicSubscriber* MqttTopicSubscriber::next()
 
 DefaultMqttSubscriber::DefaultMqttSubscriber(const char* topic)
 : MqttTopicSubscriber(topic)
+, m_trPort(new DbgTrace_Port("mqttdflt", DbgTrace_Level::debug))
 { }
 
 bool DefaultMqttSubscriber::processMessage()
@@ -182,13 +375,9 @@ bool DefaultMqttSubscriber::processMessage()
 
   if (isMyTopic() && (0 != rxMsg))
   {
-    msgHasBeenHandled = true;
-
     // take responsibility
-    Serial.print("DefaultMqttSubscriber: ");
-    Serial.print(rxMsg->getRxTopic());
-    Serial.print(", ");
-    Serial.println(rxMsg->getRxMsg());
+    msgHasBeenHandled = true;
+    TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttSubscriber (%s), rx: [%s] %s", getTopicString(), rxMsg->getRxTopic()->getTopicString(), rxMsg->getRxMsgString());
   }
 
   return msgHasBeenHandled;
