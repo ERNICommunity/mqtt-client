@@ -234,14 +234,13 @@ void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber
   if (0 == m_mqttSubscriberChain)
   {
     m_mqttSubscriberChain = mqttSubscriber;
-    Serial.print("MqttClientController::addMqttSubscriber(), added first mqttSubscriber: ");
+    TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added first MQTT Subscriber: %s", mqttSubscriber->getTopicString());
   }
   else
   {
     m_mqttSubscriberChain->addMqttSubscriber(mqttSubscriber);
-    Serial.print("MqttClientController::addMqttSubscriber(), added mqttSubscriber: ");
+    TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added MQTT Subscriber: %s", mqttSubscriber->getTopicString());
   }
-  Serial.println(mqttSubscriber->getTopicString());
 }
 
 void MqttClientController::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
@@ -249,12 +248,11 @@ void MqttClientController::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
   if (0 == m_mqttPublisherChain)
   {
     m_mqttPublisherChain = mqttPublisher;
-    Serial.print("MqttClientController::addMqttPublisher(), added first mqttPublisher: ");
+    TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added first MQTT Publisher: %s", mqttPublisher->getTopicString());
   }
   else
   {
     m_mqttPublisherChain->addMqttPublisher(mqttPublisher);
-    Serial.print("MqttClientController::addMqttPublisher(), added mqttPublisher: ");
+    TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added MQTT Publisher: %s", mqttPublisher->getTopicString());
   }
-  Serial.println(mqttPublisher->getTopicString());
 }
