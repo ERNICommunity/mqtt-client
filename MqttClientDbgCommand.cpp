@@ -15,6 +15,7 @@
 
 #include <MqttClientController.h>
 #include <MqttClientDbgCommand.h>
+#include <ConnectionMonitor.h>
 
 #include "MqttTopic.h"
 
@@ -186,6 +187,23 @@ void DbgCli_Cmd_MqttClientShow::execute(unsigned int argc, const char** args, un
     Serial.println(subscriber->getTopicString());
     subscriber = subscriber->next();
   }
+  Serial.println("Publisher Topics:");
+  MqttTopicPublisher* publisher = m_mqttClient->mqttPublisherChain();
+  if (0 == publisher)
+  {
+    Serial.println("no publishers in the list.");
+  }
+  while (0 != publisher)
+  {
+    Serial.println(publisher->getTopicString());
+    publisher = publisher->next();
+  }
+  Serial.print("MQTT Client Status: Shall ");
+  Serial.print(m_mqttClient->getShallConnect() ? "" : "not ");
+  Serial.println("connect");
+  Serial.print("Connection Monitor State: ");
+  Serial.println(m_mqttClient->connMon()->state()->toString());
+  m_mqttClient->loop();
 }
 
 //-----------------------------------------------------------------------------
