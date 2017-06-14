@@ -9,22 +9,23 @@
 #define LIB_MQTT_CLIENT_PUBSUBCLIENTWRAPPER_H_
 
 #include <IMqttClientWrapper.h>
+#include <MqttClientController.h>
 
 class PubSubClient;
 class DbgTrace_Port;
 class MqttRxMsg;
 
-const unsigned short int defaultMqttPort = 1883;
-
 class PubSubClientWrapper: public IMqttClientWrapper
 {
 public:
-  PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort = defaultMqttPort);
+  PubSubClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort = MqttClientController::defaultMqttPort);
   virtual ~PubSubClientWrapper();
 
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
   Client& client();
+  void setServer(const char* domain, uint16_t port=MqttClientController::defaultMqttPort);
+  void setClient(Client& client);
   bool loop();
   bool connect(const char* id);
   void disconnect();

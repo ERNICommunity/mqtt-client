@@ -39,6 +39,9 @@ public:
 
   virtual Client& client() = 0;
 
+  virtual void setServer(const char* domain, uint16_t port) = 0;
+  virtual void setClient(Client& client) = 0;
+
   /**
    * Process MQTT messages.
    * To be called in the Arduino loop() function.

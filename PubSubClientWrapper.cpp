@@ -60,6 +60,16 @@ Client& PubSubClientWrapper::client()
   return m_client;
 }
 
+void PubSubClientWrapper::setServer(const char* domain, uint16_t port)
+{
+  m_pubSubClient->setServer(domain, port);
+}
+
+void PubSubClientWrapper::setClient(Client& client)
+{
+  m_pubSubClient->setClient(client);
+}
+
 
 bool PubSubClientWrapper::connect(const char* id)
 {

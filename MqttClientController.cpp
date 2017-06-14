@@ -106,6 +106,7 @@ public:
 
 MqttClientController* MqttClientController::s_instance = 0;
 IMqttClientWrapper* MqttClientController::s_mqttClientWrapper = 0;
+const unsigned short int MqttClientController::defaultMqttPort = 1883;
 
 MqttClientController* MqttClientController::Instance()
 {
@@ -135,13 +136,11 @@ MqttClientController::MqttClientController()
 #ifdef ESP8266
   lanClient = new WiFiClient();
 #endif
-
   if (0 != lanClient)
   {
     assignMqttClientWrapper(new PubSubClientWrapper(*(lanClient), "test.mosquitto.org"), new PubSubClientCallbackAdapter());
     setShallConnect(true);
   }
-
 }
 
 MqttClientController::~MqttClientController()
@@ -158,9 +157,20 @@ void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClien
   s_mqttClientWrapper->setCallbackAdapter(mqttClientCallbackAdapter);
 }
 
+
 IMqttClientWrapper* MqttClientController::mqttClientWrapper()
 {
   return s_mqttClientWrapper;
+}
+
+void MqttClientController::setServer(const char* domain, uint16_t port)
+{
+  s_mqttClientWrapper->setServer(domain, port);
+}
+
+void MqttClientController::setClient(Client& client)
+{
+  s_mqttClientWrapper->setClient(client);
 }
 
 

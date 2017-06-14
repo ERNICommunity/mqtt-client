@@ -34,6 +34,9 @@ public:
   static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
   static IMqttClientWrapper* mqttClientWrapper();
 
+  void setServer(const char* domain, uint16_t port=defaultMqttPort);
+  void setClient(Client& client);
+
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
 
@@ -57,10 +60,13 @@ protected:
   void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);
   void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
 
+public:
+  static const unsigned short int defaultMqttPort;
 
 private:
   static MqttClientController* s_instance;
   static IMqttClientWrapper*   s_mqttClientWrapper;
+
   bool m_shallConnect;
   DbgTrace_Port* m_trPortMqttctrl;
   ConnectionMonitor* m_connMon;
