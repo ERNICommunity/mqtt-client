@@ -164,6 +164,8 @@ TopicLevel* MqttTopic::getLevelList() const
 //-----------------------------------------------------------------------------
 
 const unsigned int MqttTopicPublisher::s_maxDataSize = 30;
+const bool MqttTopicPublisher::DO_AUTO_PUBLISH = true;
+const bool MqttTopicPublisher::DONT_AUTO_PUBLISH = false;
 
 MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublishOnConnectEnabled)
 : MqttTopic(topic)
@@ -173,6 +175,7 @@ MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool
 {
   memset(m_data, 0, s_maxDataSize+1);
   strncpy(m_data, data, s_maxDataSize);
+  MqttClientController::Instance()->addMqttPublisher(this);
 }
 
 MqttTopicPublisher::~MqttTopicPublisher()
@@ -273,7 +276,9 @@ MqttTopicSubscriber::MqttTopicSubscriber(const char* topic)
 : MqttTopic(topic)
 , m_next(0)
 , m_rxMsg(0)
-{ }
+{
+  MqttClientController::Instance()->addMqttSubscriber(this);
+}
 
 MqttTopicSubscriber::~MqttTopicSubscriber()
 { }

@@ -130,6 +130,18 @@ MqttClientController::MqttClientController()
   new DbgCli_Cmd_MqttClientSub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientUnsub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientShow(mqttClientTopic, this);
+
+  Client* lanClient = 0;
+#ifdef ESP8266
+  lanClient = new WiFiClient();
+#endif
+
+  if (0 != lanClient)
+  {
+    assignMqttClientWrapper(new PubSubClientWrapper(*(lanClient), "test.mosquitto.org"), new PubSubClientCallbackAdapter());
+    setShallConnect(true);
+  }
+
 }
 
 MqttClientController::~MqttClientController()
@@ -196,10 +208,10 @@ int MqttClientController::publish(const char* topic, const char* data)
   return s_mqttClientWrapper->publish(topic, data);
 }
 
-void MqttClientController::installAutoPublisher(MqttTopicPublisher* mqttPublisher)
-{
-  addMqttPublisher(mqttPublisher);
-}
+//void MqttClientController::installAutoPublisher(MqttTopicPublisher* mqttPublisher)
+//{
+//  addMqttPublisher(mqttPublisher);
+//}
 
 int MqttClientController::subscribe(const char* topic)
 {
@@ -207,11 +219,11 @@ int MqttClientController::subscribe(const char* topic)
   return s_mqttClientWrapper->subscribe(topic);
 }
 
-int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
-{
-  addMqttSubscriber(mqttSubscriber);
-  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopicString());
-}
+//int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
+//{
+//  addMqttSubscriber(mqttSubscriber);
+//  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopicString());
+//}
 
 int MqttClientController::unsubscribe(const char* topic)
 {

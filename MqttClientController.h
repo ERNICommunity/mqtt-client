@@ -21,6 +21,8 @@ class MqttTopicPublisher;
 class MqttClientController
 {
   friend class MqttClientCtrlReconnectTimerAdapter;
+  friend class MqttTopicPublisher;
+  friend class MqttTopicSubscriber;
 
 private:
   MqttClientController();
@@ -38,9 +40,9 @@ public:
   void loop();
 
   int publish(const char* topic, const char* data);
-  void installAutoPublisher(MqttTopicPublisher* mqttPublisher);
+//  void installAutoPublisher(MqttTopicPublisher* mqttPublisher);
   int subscribe(const char* topic);
-  int subscribe(MqttTopicSubscriber* mqttSubscriber);
+//  int subscribe(MqttTopicSubscriber* mqttSubscriber);
   int unsubscribe(const char* topic);
 
   void connect();
@@ -51,7 +53,7 @@ public:
   MqttTopicSubscriber* mqttSubscriberChain();
   MqttTopicPublisher* mqttPublisherChain();
 
-private:
+protected:
   void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);
   void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
 
