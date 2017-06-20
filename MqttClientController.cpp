@@ -278,3 +278,45 @@ void MqttClientController::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
     TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added MQTT Publisher: %s", mqttPublisher->getTopicString());
   }
 }
+
+MqttTopicSubscriber* MqttClientController::findSubscriberByTopic(const char* topic)
+{
+  MqttTopicSubscriber* subscriber = m_mqttSubscriberChain;
+  bool found = false;
+  while ((0 != subscriber) && (!found))
+  {
+    found = (strncmp(subscriber->getTopicString(), topic, strlen(topic)) == 0);
+    if (!found)
+    {
+      subscriber = subscriber->next();
+    }
+  }
+  return subscriber;
+}
+
+void MqttClientController::deleteSubscriber(MqttTopicSubscriber* subscriberToDelete)
+{
+  MqttTopicSubscriber* next = m_mqttSubscriberChain;
+  bool found = false;
+  if (0 != next)
+  {
+    if (next == subscriberToDelete)
+    {
+      found = true;
+      if (0 != next->next())
+      {
+        m_mqttSubscriberChain = next->next();
+      }
+      delete subscriberToDelete;
+    }
+    else
+    {
+      next = next->next();
+    }
+  }
+
+  while (!found && (0 != next))
+  {
+
+  }
+}

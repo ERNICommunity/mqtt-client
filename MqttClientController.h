@@ -43,9 +43,7 @@ public:
   void loop();
 
   int publish(const char* topic, const char* data);
-//  void installAutoPublisher(MqttTopicPublisher* mqttPublisher);
   int subscribe(const char* topic);
-//  int subscribe(MqttTopicSubscriber* mqttSubscriber);
   int unsubscribe(const char* topic);
 
   void connect();
@@ -55,6 +53,9 @@ public:
 
   MqttTopicSubscriber* mqttSubscriberChain();
   MqttTopicPublisher* mqttPublisherChain();
+
+  MqttTopicSubscriber* findSubscriberByTopic(const char* topic);
+  void deleteSubscriber(MqttTopicSubscriber* subscriberToDelete);
 
 protected:
   void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);

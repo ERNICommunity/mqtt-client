@@ -124,9 +124,17 @@ void DbgCli_Cmd_MqttClientSub::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      new DefaultMqttSubscriber(args[idxToFirstArgToHandle]);
-      Serial.print("MQTT client, subscribed to ");
-      Serial.println(args[idxToFirstArgToHandle]);
+      if (0 == m_mqttClient->findSubscriberByTopic(args[idxToFirstArgToHandle]))
+      {
+        new DefaultMqttSubscriber(args[idxToFirstArgToHandle]);
+        Serial.print("MQTT client, subscribed to ");
+        Serial.println(args[idxToFirstArgToHandle]);
+      }
+      else
+      {
+        Serial.print("MQTT client, already subscribed to ");
+        Serial.println(args[idxToFirstArgToHandle]);
+      }
     }
   }
 }
@@ -154,9 +162,19 @@ void DbgCli_Cmd_MqttClientUnsub::execute(unsigned int argc, const char** args, u
   {
     if (0 != m_mqttClient)
     {
-      int retVal = m_mqttClient->unsubscribe(args[idxToFirstArgToHandle]);
-      Serial.print("MQTT client, unsubscribe ");
-      Serial.println(retVal == 1 ? "successful" : "failed");
+      MqttTopicSubscriber* subscriber = m_mqttClient->findSubscriberByTopic(args[idxToFirstArgToHandle]);
+      if (0 != subscriber)
+      {
+        m_mqttClient->deleteSubscriber(subscriber);
+        int retVal = m_mqttClient->unsubscribe(args[idxToFirstArgToHandle]);
+        Serial.print("MQTT client, unsubscribe ");
+        Serial.println(retVal == 1 ? "successful" : "failed");
+      }
+      else
+      {
+        Serial.print("MQTT client, unsubscribe not possible, topic was not subscribed: ");
+        Serial.println(args[idxToFirstArgToHandle]);
+      }
     }
   }
 }

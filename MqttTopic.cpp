@@ -278,10 +278,13 @@ MqttTopicSubscriber::MqttTopicSubscriber(const char* topic)
 , m_rxMsg(0)
 {
   MqttClientController::Instance()->addMqttSubscriber(this);
+  MqttClientController::Instance()->subscribe(topic);
 }
 
 MqttTopicSubscriber::~MqttTopicSubscriber()
-{ }
+{
+  MqttClientController::Instance()->unsubscribe(getTopicString());
+}
 
 void MqttTopicSubscriber::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber)
 {
