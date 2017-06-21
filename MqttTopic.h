@@ -79,7 +79,7 @@ public:
   virtual ~MqttTopicPublisher();
 
   virtual void publish();
-  void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
+  void setNext(MqttTopicPublisher* mqttPublisher);
   MqttTopicPublisher* next();
 
 protected:
@@ -144,9 +144,9 @@ public:
 
   void handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortMqttRx = 0);
   virtual bool processMessage() = 0;
-  void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);
   bool isMyTopic() const;
   void subscribe();
+  void setNext(MqttTopicSubscriber* mqttSubscriber);
   MqttTopicSubscriber* next();
   MqttRxMsg* getRxMsg() const;
 

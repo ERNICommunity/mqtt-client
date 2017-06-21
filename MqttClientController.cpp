@@ -260,7 +260,12 @@ void MqttClientController::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber
   }
   else
   {
-    m_mqttSubscriberChain->addMqttSubscriber(mqttSubscriber);
+    MqttTopicSubscriber* next = m_mqttSubscriberChain;
+    while (next->next() != 0)
+    {
+      next = next->next();
+    }
+    next->setNext(mqttSubscriber);
     TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added MQTT Subscriber: %s", mqttSubscriber->getTopicString());
   }
 }
@@ -274,7 +279,12 @@ void MqttClientController::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
   }
   else
   {
-    m_mqttPublisherChain->addMqttPublisher(mqttPublisher);
+    MqttTopicPublisher* next = m_mqttPublisherChain;
+    while (next->next() != 0)
+    {
+      next = next->next();
+    }
+    next->setNext(mqttPublisher);
     TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::info, "Added MQTT Publisher: %s", mqttPublisher->getTopicString());
   }
 }
@@ -296,27 +306,20 @@ MqttTopicSubscriber* MqttClientController::findSubscriberByTopic(const char* top
 
 void MqttClientController::deleteSubscriber(MqttTopicSubscriber* subscriberToDelete)
 {
-  MqttTopicSubscriber* next = m_mqttSubscriberChain;
-  bool found = false;
-  if (0 != next)
+  if (m_mqttSubscriberChain == subscriberToDelete)
   {
-    if (next == subscriberToDelete)
-    {
-      found = true;
-      if (0 != next->next())
-      {
-        m_mqttSubscriberChain = next->next();
-      }
-      delete subscriberToDelete;
-    }
-    else
+    m_mqttSubscriberChain = subscriberToDelete->next();
+  }
+  else
+  {
+    MqttTopicSubscriber* next = m_mqttSubscriberChain;
+    while ((next != 0) && (next->next() != subscriberToDelete))
     {
       next = next->next();
     }
-  }
-
-  while (!found && (0 != next))
-  {
-
+    if (next != 0)
+    {
+      next->setNext(subscriberToDelete->next());
+    }
   }
 }

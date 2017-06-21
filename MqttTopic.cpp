@@ -181,16 +181,9 @@ MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool
 MqttTopicPublisher::~MqttTopicPublisher()
 { }
 
-void MqttTopicPublisher::addMqttPublisher(MqttTopicPublisher* mqttPublisher)
+void MqttTopicPublisher::setNext(MqttTopicPublisher* mqttPublisher)
 {
-  if (0 == m_next)
-  {
-    m_next = mqttPublisher;
-  }
-  else
-  {
-    m_next->addMqttPublisher(mqttPublisher);
-  }
+  m_next = mqttPublisher;
 }
 
 void MqttTopicPublisher::publish()
@@ -286,16 +279,9 @@ MqttTopicSubscriber::~MqttTopicSubscriber()
   MqttClientController::Instance()->unsubscribe(getTopicString());
 }
 
-void MqttTopicSubscriber::addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber)
+void MqttTopicSubscriber::setNext(MqttTopicSubscriber* mqttSubscriber)
 {
-  if (0 == m_next)
-  {
-    m_next = mqttSubscriber;
-  }
-  else
-  {
-    m_next->addMqttSubscriber(mqttSubscriber);
-  }
+  m_next = mqttSubscriber;
 }
 
 bool MqttTopicSubscriber::isMyTopic() const
