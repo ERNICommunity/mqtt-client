@@ -167,15 +167,20 @@ const unsigned int MqttTopicPublisher::s_maxDataSize = 30;
 const bool MqttTopicPublisher::DO_AUTO_PUBLISH = true;
 const bool MqttTopicPublisher::DONT_AUTO_PUBLISH = false;
 
-MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublishOnConnectEnabled)
+MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublish)
 : MqttTopic(topic)
 , m_next(0)
 , m_data(new char[s_maxDataSize+1])
-, m_isAutoPublishOnConnectEnabled(isAutoPublishOnConnectEnabled)
+, m_isAutoPublish(isAutoPublish)
 {
   memset(m_data, 0, s_maxDataSize+1);
   strncpy(m_data, data, s_maxDataSize);
   MqttClientController::Instance()->addMqttPublisher(this);
+  if (m_isAutoPublish)
+  {
+    int r = 0;
+    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+  }
 }
 
 MqttTopicPublisher::~MqttTopicPublisher()
@@ -203,21 +208,15 @@ void MqttTopicPublisher::publish()
 
 void MqttTopicPublisher::publishAll()
 {
-  autoPublishOnConnect();
+  if (m_isAutoPublish)
+  {
+    int r = 0;
+    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+  }
   if (0 != next())
   {
     next()->publishAll();
   }
-}
-
-int MqttTopicPublisher::autoPublishOnConnect()
-{
-  int r = 0;
-  if (m_isAutoPublishOnConnectEnabled)
-  {
-    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
-  }
-  return r;
 }
 
 void MqttTopicPublisher::setNext(MqttTopicPublisher* mqttPublisher)

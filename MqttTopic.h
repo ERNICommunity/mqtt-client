@@ -87,13 +87,10 @@ public:
 
   void publishAll();
 
-protected:
-  virtual int autoPublishOnConnect();
-
 private:
   MqttTopicPublisher* m_next;
   char* m_data;
-  bool m_isAutoPublishOnConnectEnabled;
+  bool m_isAutoPublish;
   static const unsigned int s_maxDataSize;
 
 public:
