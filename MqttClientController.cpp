@@ -92,7 +92,7 @@ public:
       MqttTopicPublisher* publisherChain = m_mqttClientCtrl->mqttPublisherChain();
       if (0 != publisherChain)
       {
-        publisherChain->publish();
+        publisherChain->publishAll();
       }
     }
     else
@@ -218,22 +218,10 @@ int MqttClientController::publish(const char* topic, const char* data)
   return s_mqttClientWrapper->publish(topic, data);
 }
 
-//void MqttClientController::installAutoPublisher(MqttTopicPublisher* mqttPublisher)
-//{
-//  addMqttPublisher(mqttPublisher);
-//}
-
 int MqttClientController::subscribe(const char* topic)
 {
-//  addMqttSubscriber(new DefaultMqttSubscriber(topic));
   return s_mqttClientWrapper->subscribe(topic);
 }
-
-//int MqttClientController::subscribe(MqttTopicSubscriber* mqttSubscriber)
-//{
-//  addMqttSubscriber(mqttSubscriber);
-//  return s_mqttClientWrapper->subscribe(mqttSubscriber->getTopicString());
-//}
 
 int MqttClientController::unsubscribe(const char* topic)
 {
@@ -304,6 +292,21 @@ MqttTopicSubscriber* MqttClientController::findSubscriberByTopic(const char* top
   return subscriber;
 }
 
+MqttTopicPublisher* MqttClientController::findPublisherByTopic(const char* topic)
+{
+  MqttTopicPublisher* publisher = m_mqttPublisherChain;
+  bool found = false;
+  while ((0 != publisher) && (!found))
+  {
+    found = (strncmp(publisher->getTopicString(), topic, strlen(topic)) == 0);
+    if (!found)
+    {
+      publisher = publisher->next();
+    }
+  }
+  return publisher;
+}
+
 void MqttClientController::deleteSubscriber(MqttTopicSubscriber* subscriberToDelete)
 {
   if (m_mqttSubscriberChain == subscriberToDelete)
@@ -323,3 +326,24 @@ void MqttClientController::deleteSubscriber(MqttTopicSubscriber* subscriberToDel
     }
   }
 }
+
+void MqttClientController::deletePublisher(MqttTopicPublisher* publisherToDelete)
+{
+  if (m_mqttPublisherChain == publisherToDelete)
+  {
+    m_mqttPublisherChain = publisherToDelete->next();
+  }
+  else
+  {
+    MqttTopicPublisher* next = m_mqttPublisherChain;
+    while ((next != 0) && (next->next() != publisherToDelete))
+    {
+      next = next->next();
+    }
+    if (next != 0)
+    {
+      next->setNext(publisherToDelete->next());
+    }
+  }
+}
+

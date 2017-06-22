@@ -179,19 +179,34 @@ MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool
 }
 
 MqttTopicPublisher::~MqttTopicPublisher()
-{ }
-
-void MqttTopicPublisher::setNext(MqttTopicPublisher* mqttPublisher)
 {
-  m_next = mqttPublisher;
+  MqttClientController::Instance()->deletePublisher(this);
+}
+
+void MqttTopicPublisher::setData(const char* data)
+{
+  memset(m_data, 0, s_maxDataSize+1);
+  strncpy(m_data, data, s_maxDataSize);
+}
+
+void MqttTopicPublisher::publish(const char* data)
+{
+  int r = 0;
+  r = MqttClientController::Instance()->publish(getTopicString(), data);
 }
 
 void MqttTopicPublisher::publish()
 {
+  int r = 0;
+  r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+}
+
+void MqttTopicPublisher::publishAll()
+{
   autoPublishOnConnect();
   if (0 != next())
   {
-    next()->publish();
+    next()->publishAll();
   }
 }
 
@@ -203,6 +218,11 @@ int MqttTopicPublisher::autoPublishOnConnect()
     r = MqttClientController::Instance()->publish(getTopicString(), m_data);
   }
   return r;
+}
+
+void MqttTopicPublisher::setNext(MqttTopicPublisher* mqttPublisher)
+{
+  m_next = mqttPublisher;
 }
 
 MqttTopicPublisher* MqttTopicPublisher::next()
@@ -277,6 +297,7 @@ MqttTopicSubscriber::MqttTopicSubscriber(const char* topic)
 MqttTopicSubscriber::~MqttTopicSubscriber()
 {
   MqttClientController::Instance()->unsubscribe(getTopicString());
+  MqttClientController::Instance()->deleteSubscriber(this);
 }
 
 void MqttTopicSubscriber::setNext(MqttTopicSubscriber* mqttSubscriber)

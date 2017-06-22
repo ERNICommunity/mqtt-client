@@ -17,7 +17,7 @@
 #include <MqttClientDbgCommand.h>
 #include <ConnectionMonitor.h>
 
-#include "MqttTopic.h"
+#include <MqttTopic.h>
 
 //-----------------------------------------------------------------------------
 
@@ -94,9 +94,14 @@ void DbgCli_Cmd_MqttClientPub::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      int retVal = m_mqttClient->publish(args[idxToFirstArgToHandle], args[idxToFirstArgToHandle+1]);
-      Serial.print("MQTT client, publish ");
-      Serial.println(retVal == 1 ? "successful" : "failed");
+      MqttTopicPublisher* publisher = m_mqttClient->findPublisherByTopic(args[idxToFirstArgToHandle]);
+      if (0 == publisher)
+      {
+        publisher = new MqttTopicPublisher(args[idxToFirstArgToHandle], args[idxToFirstArgToHandle+1]);
+      }
+      publisher->publish();
+      Serial.print("MQTT client, published to ");
+      Serial.println(args[idxToFirstArgToHandle+1]);
     }
   }
 }
@@ -124,7 +129,8 @@ void DbgCli_Cmd_MqttClientSub::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      if (0 == m_mqttClient->findSubscriberByTopic(args[idxToFirstArgToHandle]))
+      MqttTopicSubscriber* subscriber = m_mqttClient->findSubscriberByTopic(args[idxToFirstArgToHandle]);
+      if (0 == subscriber)
       {
         new DefaultMqttSubscriber(args[idxToFirstArgToHandle]);
         Serial.print("MQTT client, subscribed to ");
@@ -165,10 +171,9 @@ void DbgCli_Cmd_MqttClientUnsub::execute(unsigned int argc, const char** args, u
       MqttTopicSubscriber* subscriber = m_mqttClient->findSubscriberByTopic(args[idxToFirstArgToHandle]);
       if (0 != subscriber)
       {
-        m_mqttClient->deleteSubscriber(subscriber);
-        int retVal = m_mqttClient->unsubscribe(args[idxToFirstArgToHandle]);
-        Serial.print("MQTT client, unsubscribe ");
-        Serial.println(retVal == 1 ? "successful" : "failed");
+        delete subscriber;
+        Serial.print("MQTT client, unsubscribed from ");
+        Serial.println(args[idxToFirstArgToHandle]);
       }
       else
       {

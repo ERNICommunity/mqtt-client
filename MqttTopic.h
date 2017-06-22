@@ -78,9 +78,14 @@ public:
   MqttTopicPublisher(const char* topic, const char* data, bool isAutoPublishOnConnectEnabled = DONT_AUTO_PUBLISH);
   virtual ~MqttTopicPublisher();
 
-  virtual void publish();
+  void setData(const char* data);
+  void publish(const char* data);
+  void publish();
+
   void setNext(MqttTopicPublisher* mqttPublisher);
   MqttTopicPublisher* next();
+
+  void publishAll();
 
 protected:
   virtual int autoPublishOnConnect();
@@ -164,7 +169,7 @@ private:
 //-----------------------------------------------------------------------------
 
 /**
- * Default implementation of a message handler.
+ * Default implementation of an MQTT Topic Subscriber.
  */
 class DefaultMqttSubscriber : public MqttTopicSubscriber
 {
@@ -179,5 +184,24 @@ private:
   DefaultMqttSubscriber& operator = (const DefaultMqttSubscriber& src); // assignment operator
   DefaultMqttSubscriber(const DefaultMqttSubscriber& src);              // copy constructor
 };
+
+//-----------------------------------------------------------------------------
+
+/**
+ * Default implementation of an MQTT Topic Publisher.
+ */
+class DefaultMqttPublisher : public MqttTopicPublisher
+{
+public:
+  DefaultMqttPublisher(const char* topic);
+private:
+  DbgTrace_Port* m_trPort;
+private:
+  // forbidden default functions
+  DefaultMqttPublisher();                                               // default constructor
+  DefaultMqttPublisher& operator = (const DefaultMqttPublisher& src);   // assignment operator
+  DefaultMqttPublisher(const DefaultMqttPublisher& src);                // copy constructor
+};
+
 
 #endif /* LIB_MQTT_CLIENT_MQTTTOPIC_H_ */
