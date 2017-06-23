@@ -9,4 +9,9 @@ void MqttClientClass::begin(const char* address, unsigned short int port)
   MqttClientController::Instance()->setServer(address, port);
 }
 
+void MqttClientClass::loop()
+{
+  MqttClientController::Instance()->loop();
+}
+
 MqttClientClass MqttClient;

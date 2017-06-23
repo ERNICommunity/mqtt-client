@@ -13,6 +13,7 @@ class MqttClientClass
 public:
   static const unsigned short int defaultMqttPort;
   void begin(const char* address, unsigned short int port = defaultMqttPort);
+  void loop();
 };
 
 extern MqttClientClass MqttClient;
