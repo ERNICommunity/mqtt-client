@@ -34,7 +34,7 @@ public:
   static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
   static IMqttClientWrapper* mqttClientWrapper();
 
-  void setServer(const char* domain, uint16_t port=defaultMqttPort);
+  void setServer(const char* domain, unsigned short int port=defaultMqttPort);
   void setClient(Client& client);
 
   void setShallConnect(bool shallConnect);
