@@ -225,7 +225,6 @@ int MqttClientController::subscribe(const char* topic)
 
 int MqttClientController::unsubscribe(const char* topic)
 {
-  // TODO: remove and delete the default subscriber object
   return s_mqttClientWrapper->unsubscribe(topic);
 }
 
