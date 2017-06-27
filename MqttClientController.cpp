@@ -215,6 +215,7 @@ void MqttClientController::loop()
 
 int MqttClientController::publish(const char* topic, const char* data)
 {
+  TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::debug, "publish(%s, %s)\n", topic, data);
   return s_mqttClientWrapper->publish(topic, data);
 }
 
