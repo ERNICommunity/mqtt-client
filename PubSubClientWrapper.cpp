@@ -151,7 +151,7 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* pa
   memcpy(msg, payload, length);
   msg[length] = 0;
 
-  TR_PRINTF(m_trPortMqttRx, DbgTrace_Level::info, "Message arrived, topic: %s - msg: %s", topic, msg);
+  TR_PRINTF(m_trPortMqttRx, DbgTrace_Level::info, "Message arrived, topic: %s - msg: %s (len: %d)", topic, msg, length);
 
   m_rxMsg->prepare(topic, payload, length);
 

@@ -163,7 +163,7 @@ TopicLevel* MqttTopic::getLevelList() const
 
 //-----------------------------------------------------------------------------
 
-const unsigned int MqttTopicPublisher::s_maxDataSize = 30;
+const unsigned int MqttTopicPublisher::s_maxDataSize = 500;
 const bool MqttTopicPublisher::DO_AUTO_PUBLISH = true;
 const bool MqttTopicPublisher::DONT_AUTO_PUBLISH = false;
 
