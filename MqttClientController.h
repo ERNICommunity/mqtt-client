@@ -13,7 +13,7 @@ class IMqttClientWrapper;
 class IMqttClientCallbackAdapter;
 class PubSubClientWrapper;
 class Timer;
-class ConnectionMonitor;
+class ConnMon;
 class DbgTrace_Port;
 class MqttTopicSubscriber;
 class MqttTopicPublisher;
@@ -50,7 +50,7 @@ protected:
 public:
   void connect();
 
-  ConnectionMonitor* connMon();
+  ConnMon* connMon();
   DbgTrace_Port* trPort();
 
   MqttTopicSubscriber* mqttSubscriberChain();
@@ -74,7 +74,7 @@ private:
 
   bool m_shallConnect;
   DbgTrace_Port* m_trPortMqttctrl;
-  ConnectionMonitor* m_connMon;
+  ConnMon* m_connMon;
   MqttTopicSubscriber* m_mqttSubscriberChain;
   MqttTopicPublisher* m_mqttPublisherChain;
 

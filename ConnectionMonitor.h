@@ -18,9 +18,9 @@ public:
   ConnMonAdapter();
   virtual ~ConnMonAdapter();
   virtual bool lanConnectedRaw();
-  virtual bool mqttConnectedRaw();
+  virtual bool appProtocolConnectedRaw();
   virtual void notifyLanConnected(bool isLanConnected) { }
-  virtual void notifyMqttConnected(bool isMqttConnected) { }
+  virtual void notifyAppProtocolConnected(bool isMqttConnected) { }
   DbgTrace_Port* trPort();
 
 private:
@@ -32,18 +32,18 @@ private:
   ConnMonAdapter(const ConnMonAdapter& src);             // copy constructor
 };
 
-class ConnectionMonitor
+class ConnMon
 {
 public:
-  ConnectionMonitor(ConnMonAdapter* adapter = 0);
-  virtual ~ConnectionMonitor();
+  ConnMon(ConnMonAdapter* adapter = 0);
+  virtual ~ConnMon();
   ConnMonAdapter* adapter();
   bool isLanDeviceConnected();
-  bool isMqttLibConnected();
+  bool isAppProtocolLibConnected();
   bool isLanConnected();
-  bool isMqttConnected();
+  bool isAppProtocolConnected();
   void evaluateState();
-  void setMqttState(bool mqttIsConnected);
+  void setAppProtocolState(bool mqttIsConnected);
   void changeState(ConnMonState* newState);
   ConnMonState* state();
   ConnMonState* prevState();
@@ -58,8 +58,8 @@ private:
 
 private:
   // forbidden default functions
-  ConnectionMonitor& operator =(const ConnectionMonitor& src);  // assignment operator
-  ConnectionMonitor(const ConnectionMonitor& src);              // copy constructor
+  ConnMon& operator =(const ConnMon& src);  // assignment operator
+  ConnMon(const ConnMon& src);              // copy constructor
 };
 
 //-----------------------------------------------------------------------------
@@ -71,10 +71,10 @@ protected:
 
 public:
   virtual ~ConnMonState() { }
-  virtual void evaluateState(ConnectionMonitor* monitor) = 0;
-  virtual void evaluateState(ConnectionMonitor* monitor, bool mqttState) { }
-  virtual void timeExpired(ConnectionMonitor* monitor) { }
-  virtual void entry(ConnectionMonitor* monitor);
+  virtual void evaluateState(ConnMon* monitor) = 0;
+  virtual void evaluateState(ConnMon* monitor, bool mqttState) { }
+  virtual void timeExpired(ConnMon* monitor) { }
+  virtual void entry(ConnMon* monitor);
   virtual const char* toString() = 0;
 };
 
@@ -88,8 +88,8 @@ private:
 public:
   static ConnMonState* Instance();
   virtual ~ConnMonState_Unconnected() { }
-  void evaluateState(ConnectionMonitor* monitor);
-  void entry(ConnectionMonitor* monitor);
+  void evaluateState(ConnMon* monitor);
+  void entry(ConnMon* monitor);
   const char* toString();
 
 private:
@@ -106,9 +106,9 @@ private:
 public:
   static ConnMonState* Instance();
   virtual ~ConnMonState_LanConnected() { }
-  void evaluateState(ConnectionMonitor* monitor);
-  void timeExpired(ConnectionMonitor* monitor);
-  void entry(ConnectionMonitor* monitor);
+  void evaluateState(ConnMon* monitor);
+  void timeExpired(ConnMon* monitor);
+  void entry(ConnMon* monitor);
   const char* toString();
 
 private:
@@ -125,9 +125,9 @@ private:
 public:
   static ConnMonState* Instance();
   virtual ~ConnMonState_StableLanConnection() { }
-  void evaluateState(ConnectionMonitor* monitor);
-  void evaluateState(ConnectionMonitor* monitor, bool mqttState);
-  void entry(ConnectionMonitor* monitor);
+  void evaluateState(ConnMon* monitor);
+  void evaluateState(ConnMon* monitor, bool mqttState);
+  void entry(ConnMon* monitor);
   const char* toString();
 
 private:
@@ -136,17 +136,17 @@ private:
 
 //-----------------------------------------------------------------------------
 
-class ConnMonState_MqttConnected : public ConnMonState
+class ConnMonState_AppProtocolConnected : public ConnMonState
 {
 private:
-  ConnMonState_MqttConnected() { }
+  ConnMonState_AppProtocolConnected() { }
 
 public:
   static ConnMonState* Instance();
-  virtual ~ConnMonState_MqttConnected() { }
-  void evaluateState(ConnectionMonitor* monitor);
-  void evaluateState(ConnectionMonitor* monitor, bool mqttState);
-  void entry(ConnectionMonitor* monitor);
+  virtual ~ConnMonState_AppProtocolConnected() { }
+  void evaluateState(ConnMon* monitor);
+  void evaluateState(ConnMon* monitor, bool mqttState);
+  void entry(ConnMon* monitor);
   const char* toString();
 
 private:

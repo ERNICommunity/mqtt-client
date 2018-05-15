@@ -39,7 +39,7 @@ public:
   , m_mqttClientCtrl(mqttClientCtrl)
   { }
 
-  bool mqttConnectedRaw()
+  bool appProtocolConnectedRaw()
   {
     bool isMqttConnected = false;
     if (0 != m_mqttClientCtrl)
@@ -55,7 +55,7 @@ public:
     if (isLanConnected && (0 != m_mqttClientCtrl) && (0 != m_mqttClientCtrl->connMon()))
     {
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: ON");
-      if (m_mqttClientCtrl->getShallConnect() && !m_mqttClientCtrl->connMon()->isMqttConnected())
+      if (m_mqttClientCtrl->getShallConnect() && !m_mqttClientCtrl->connMon()->isAppProtocolConnected())
       {
         // possible workaround for a possible PubSubClient bug:
         m_mqttClientCtrl->mqttClientWrapper()->client().flush();
@@ -75,7 +75,7 @@ public:
     }
   }
 
-  void notifyMqttConnected(bool isMqttConnected)
+  void notifyAppProtocolConnected(bool isMqttConnected)
   {
     if (isMqttConnected)
     {
@@ -120,7 +120,7 @@ MqttClientController* MqttClientController::Instance()
 MqttClientController::MqttClientController()
 : m_shallConnect(false)
 , m_trPortMqttctrl(new DbgTrace_Port("mqttctrl", DbgTrace_Level::info))
-, m_connMon(new ConnectionMonitor(new MyConnMonAdapter(this)))
+, m_connMon(new ConnMon(new MyConnMonAdapter(this)))
 , m_mqttSubscriberChain(0)
 , m_mqttPublisherChain(0)
 {
@@ -177,7 +177,7 @@ void MqttClientController::setClient(Client& client)
 void MqttClientController::setShallConnect(bool shallConnect)
 {
   m_shallConnect = shallConnect;
-  m_connMon->setMqttState(shallConnect);
+  m_connMon->setAppProtocolState(shallConnect);
   if (!shallConnect)
   {
     s_mqttClientWrapper->disconnect();
@@ -194,7 +194,7 @@ void MqttClientController::connect()
   s_mqttClientWrapper->connect(WiFi.macAddress().c_str());
 }
 
-ConnectionMonitor* MqttClientController::connMon()
+ConnMon* MqttClientController::connMon()
 {
   return m_connMon;
 }
@@ -206,10 +206,10 @@ DbgTrace_Port* MqttClientController::trPort()
 
 void MqttClientController::loop()
 {
-  if (m_connMon->isMqttConnected())
+  if (m_connMon->isAppProtocolConnected())
   {
     bool mqttIsConnected = s_mqttClientWrapper->loop();
-    m_connMon->setMqttState(mqttIsConnected);
+    m_connMon->setAppProtocolState(mqttIsConnected);
   }
 }
 
