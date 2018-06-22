@@ -29,7 +29,9 @@ public:
   {
     if (0 != m_monitor)
     {
+//      Serial.println("conMon.StatusPollTimerAdapter::timeExpired(): calling m_monitor->evaluateState()");
       m_monitor->evaluateState();
+//      Serial.println("conMon.StatusPollTimerAdapter::timeExpired(): returned from m_monitor->evaluateState()");
     }
   }
 };
@@ -85,10 +87,15 @@ bool ConnMonAdapter::appProtocolConnectedRaw()
   return false;
 }
 
+bool ConnMonAdapter::shallAppProtocolConnect()
+{
+  return false;
+}
+
 //-----------------------------------------------------------------------------
 
-const unsigned long cStatusPollIntervalMillis  = 1000;
-const unsigned long cStableCheckIntervalMillis = 2000;
+const unsigned long cStatusPollIntervalMillis  = 2000;
+const unsigned long cStableCheckIntervalMillis = 3000;
 
 ConnMon::ConnMon(ConnMonAdapter* adapter)
 : m_statusPollTimer(new Timer(new StatusPollTimerAdapter(this), Timer::IS_RECURRING, cStatusPollIntervalMillis))
@@ -146,6 +153,16 @@ bool ConnMon::isAppProtocolLibConnected()
   return isConn;
 }
 
+bool ConnMon::shallAppProtocolConnect()
+{
+  bool shallConn = false;
+  if (0 != m_adapter)
+  {
+    shallConn = m_adapter->shallAppProtocolConnect();
+  }
+  return shallConn;
+}
+
 bool ConnMon::isLanConnected()
 {
   return (ConnMonState_StableLanConnection::Instance() == state());
@@ -161,14 +178,6 @@ void ConnMon::evaluateState()
   if (0 != m_state)
   {
     m_state->evaluateState(this);
-  }
-}
-
-void ConnMon::setAppProtocolState(bool mqttIsConnected)
-{
-  if (0 != m_state)
-  {
-    m_state->evaluateState(this, mqttIsConnected);
   }
 }
 
@@ -303,18 +312,17 @@ void ConnMonState_StableLanConnection::evaluateState(ConnMon* monitor)
     {
       monitor->changeState(ConnMonState_AppProtocolConnected::Instance());
     }
+    else
+    {
+      if (monitor->shallAppProtocolConnect())
+      {
+        monitor->adapter()->actionConnectAppProtocol();
+      }
+    }
   }
   else
   {
     monitor->changeState(ConnMonState_Unconnected::Instance());
-  }
-}
-
-void ConnMonState_StableLanConnection::evaluateState(ConnMon* monitor, bool mqttState)
-{
-  if (mqttState)
-  {
-    monitor->changeState(ConnMonState_AppProtocolConnected::Instance());
   }
 }
 
@@ -358,21 +366,14 @@ void ConnMonState_AppProtocolConnected::evaluateState(ConnMon* monitor)
   }
 }
 
-void ConnMonState_AppProtocolConnected::evaluateState(ConnMon* monitor, bool mqttState)
-{
-  if (!mqttState)
-  {
-    monitor->changeState(ConnMonState_LanConnected::Instance());
-  }
-}
-
 void ConnMonState_AppProtocolConnected::entry(ConnMon* monitor)
 {
   ConnMonState::entry(monitor);
   monitor->adapter()->notifyAppProtocolConnected(true);
+  yield();
 }
 
 const char* ConnMonState_AppProtocolConnected::toString()
 {
-  return "MqttConnected";
+  return "AppProtocolConnected";
 }

@@ -1,5 +1,5 @@
 /*
- * MqttMsgHandler.h
+ * MqttTopic.h
  *
  *  Created on: 16.12.2016
  *      Author: nid
@@ -22,9 +22,12 @@ public:
 
   void append(TopicLevel* level);
 
-  enum WildcardType {  eTWC_None   = 0,
-                            eTWC_Single = 1,
-                            eTWC_Multi  = 2  };
+  enum WildcardType
+  {
+    eTWC_None = 0,
+    eTWC_Single = 1,
+    eTWC_Multi = 2
+  };
 
   WildcardType getWildcardType();
 
@@ -112,7 +115,7 @@ public:
   MqttRxMsg();
   virtual ~MqttRxMsg();
 
-  void prepare(const char* topic, unsigned char* payload, unsigned int length);
+  void prepare(const char* topic, const char* payload, unsigned int length);
 
   MqttTopic* getRxTopic() const;
   const char* getRxMsgString() const;
