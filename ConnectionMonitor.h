@@ -19,6 +19,8 @@ public:
   virtual ~ConnMonAdapter();
   virtual bool lanConnectedRaw();
   virtual bool appProtocolConnectedRaw();
+  virtual bool shallAppProtocolConnect();
+  virtual void actionConnectAppProtocol() { }
   virtual void notifyLanConnected(bool isLanConnected) { }
   virtual void notifyAppProtocolConnected(bool isMqttConnected) { }
   DbgTrace_Port* trPort();
@@ -40,10 +42,10 @@ public:
   ConnMonAdapter* adapter();
   bool isLanDeviceConnected();
   bool isAppProtocolLibConnected();
+  bool shallAppProtocolConnect();
   bool isLanConnected();
   bool isAppProtocolConnected();
   void evaluateState();
-  void setAppProtocolState(bool mqttIsConnected);
   void changeState(ConnMonState* newState);
   ConnMonState* state();
   ConnMonState* prevState();
@@ -72,7 +74,7 @@ protected:
 public:
   virtual ~ConnMonState() { }
   virtual void evaluateState(ConnMon* monitor) = 0;
-  virtual void evaluateState(ConnMon* monitor, bool mqttState) { }
+//  virtual void evaluateState(ConnMon* monitor, bool mqttState) { }
   virtual void timeExpired(ConnMon* monitor) { }
   virtual void entry(ConnMon* monitor);
   virtual const char* toString() = 0;
@@ -126,7 +128,7 @@ public:
   static ConnMonState* Instance();
   virtual ~ConnMonState_StableLanConnection() { }
   void evaluateState(ConnMon* monitor);
-  void evaluateState(ConnMon* monitor, bool mqttState);
+//  void evaluateState(ConnMon* monitor, bool mqttState);
   void entry(ConnMon* monitor);
   const char* toString();
 
@@ -145,7 +147,7 @@ public:
   static ConnMonState* Instance();
   virtual ~ConnMonState_AppProtocolConnected() { }
   void evaluateState(ConnMon* monitor);
-  void evaluateState(ConnMon* monitor, bool mqttState);
+//  void evaluateState(ConnMon* monitor, bool mqttState);
   void entry(ConnMon* monitor);
   const char* toString();
 

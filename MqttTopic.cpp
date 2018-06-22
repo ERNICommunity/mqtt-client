@@ -1,5 +1,5 @@
 /*
- * MqttMsgHandler.cpp
+ * MqttTopic.cpp
  *
  *  Created on: 16.12.2016
  *      Author: nid
@@ -215,6 +215,7 @@ void MqttTopicPublisher::publishAll()
   }
   if (0 != next())
   {
+    yield();
     next()->publishAll();
   }
 }
@@ -250,7 +251,7 @@ MqttRxMsg::~MqttRxMsg()
   m_rxTopic = 0;
 }
 
-void MqttRxMsg::prepare(const char* topic, unsigned char* payload, unsigned int length)
+void MqttRxMsg::prepare(const char* topic, const char* payload, unsigned int length)
 {
   if (length > s_maxRxMsgSize)
   {
@@ -356,6 +357,7 @@ void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortM
   {
     if (0 != next())
     {
+      yield();
       next()->handleMessage(rxMsg, trPortMqttRx);
     }
   }
@@ -367,6 +369,7 @@ void MqttTopicSubscriber::subscribe()
   if (0 != next())
   {
     next()->subscribe();
+    yield();
   }
 }
 

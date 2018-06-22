@@ -48,7 +48,7 @@ protected:
   int unsubscribe(const char* topic);
 
 public:
-  void connect();
+  bool connect();
 
   ConnMon* connMon();
   DbgTrace_Port* trPort();

@@ -23,6 +23,8 @@
 #include <MqttTopic.h>
 #include <ConnectionMonitor.h>
 #include <PubSubClientWrapper.h>
+#include <MqttMockClientWrapper.h>
+#include <MqttClientWrapper.h>
 #include <MqttClientDbgCommand.h>
 #include <MqttClientController.h>
 
@@ -50,24 +52,35 @@ public:
     return isMqttConnected;
   }
 
+  bool shallAppProtocolConnect()
+  {
+    bool shallMqttConnect = false;
+    if (0 != m_mqttClientCtrl)
+    {
+      shallMqttConnect = m_mqttClientCtrl->getShallConnect();
+      TR_PRINTF(trPort(), DbgTrace_Level::debug, "MQTT client shall %s", shallMqttConnect ? "connect" : "not connect");
+    }
+    return shallMqttConnect;
+  }
+
+  void actionConnectAppProtocol()
+  {
+    bool isConnected = false;
+    if (0 != m_mqttClientCtrl)
+    {
+      TR_PRINTF(trPort(), DbgTrace_Level::error, "actionConnectAppProtocol()");
+      isConnected = m_mqttClientCtrl->connect();
+      TR_PRINTF(trPort(), DbgTrace_Level::error, "actionConnectAppProtocol() done - MQTT client %s; %s",
+          isConnected ? "connected" : "NOT connected",
+          m_mqttClientCtrl->mqttClientWrapper()->connected() ? "connected" : "NOT connected");
+    }
+  }
+
   void notifyLanConnected(bool isLanConnected)
   {
-    if (isLanConnected && (0 != m_mqttClientCtrl) && (0 != m_mqttClientCtrl->connMon()))
+    if (isLanConnected)
     {
       TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "LAN Connection: ON");
-      if (m_mqttClientCtrl->getShallConnect() && !m_mqttClientCtrl->connMon()->isAppProtocolConnected())
-      {
-        // possible workaround for a possible PubSubClient bug:
-        m_mqttClientCtrl->mqttClientWrapper()->client().flush();
-
-        const int nbrOfLoops = 10;
-        for (int i = 0; i < nbrOfLoops; i++)
-        {
-          m_mqttClientCtrl->loop();
-        }
-
-        m_mqttClientCtrl->connect();
-      }
     }
     else
     {
@@ -79,25 +92,29 @@ public:
   {
     if (isMqttConnected)
     {
-      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: ON");
+      TR_PRINT_STR(trPort(), DbgTrace_Level::info, "MQTT Connection: ON");
 
       // subscribe to topics
       MqttTopicSubscriber* subscriberChain = m_mqttClientCtrl->mqttSubscriberChain();
       if (0 != subscriberChain)
       {
+        TR_PRINTF(trPort(), DbgTrace_Level::debug, "notifyAppProtocolConnected(), subscriberChain->subscribe()");
         subscriberChain->subscribe();
+        TR_PRINTF(trPort(), DbgTrace_Level::info, "notifyAppProtocolConnected(), subscriberChain->subscribe() done");
       }
 
       // publish the auto publisher topics
       MqttTopicPublisher* publisherChain = m_mqttClientCtrl->mqttPublisherChain();
       if (0 != publisherChain)
       {
+        TR_PRINTF(trPort(), DbgTrace_Level::debug, "notifyAppProtocolConnected(), publisherChain->publishAll()");
         publisherChain->publishAll();
+        TR_PRINTF(trPort(), DbgTrace_Level::info, "notifyAppProtocolConnected(), publisherChain->publishAll() done");
       }
     }
     else
     {
-      TR_PRINT_STR(trPort(), DbgTrace_Level::debug, "MQTT Connection: OFF");
+      TR_PRINT_STR(trPort(), DbgTrace_Level::info, "MQTT Connection: OFF");
     }
   }
 };
@@ -138,7 +155,9 @@ MqttClientController::MqttClientController()
 #endif
   if (0 != lanClient)
   {
-    assignMqttClientWrapper(new PubSubClientWrapper(*(lanClient), "test.mosquitto.org"), new PubSubClientCallbackAdapter());
+//    assignMqttClientWrapper(new PubSubClientWrapper(*(lanClient), "iot.eclipse.org"), new PubSubClientCallbackAdapter());
+//    assignMqttClientWrapper(new MqttMockClientWrapper(*(lanClient), "test.mosquitto.org"), new MqttMockClientCallbackAdapter());
+    assignMqttClientWrapper(new MqttClientWrapper(*(lanClient), "test.mosquitto.org"), new MqttClientCallbackAdapter());
     setShallConnect(true);
   }
 }
@@ -154,7 +173,10 @@ MqttClientController::~MqttClientController()
 void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter)
 {
   s_mqttClientWrapper = mqttClientWrapper;
-  s_mqttClientWrapper->setCallbackAdapter(mqttClientCallbackAdapter);
+  if (0 != s_mqttClientWrapper)
+  {
+    s_mqttClientWrapper->setCallbackAdapter(mqttClientCallbackAdapter);
+  }
 }
 
 
@@ -165,22 +187,30 @@ IMqttClientWrapper* MqttClientController::mqttClientWrapper()
 
 void MqttClientController::setServer(const char* domain, uint16_t port)
 {
-  s_mqttClientWrapper->setServer(domain, port);
+  if (0 != s_mqttClientWrapper)
+  {
+    s_mqttClientWrapper->setServer(domain, port);
+  }
 }
 
 void MqttClientController::setClient(Client& client)
 {
-  s_mqttClientWrapper->setClient(client);
+  if (0 != s_mqttClientWrapper)
+  {
+    s_mqttClientWrapper->setClient(client);
+  }
 }
 
 
 void MqttClientController::setShallConnect(bool shallConnect)
 {
   m_shallConnect = shallConnect;
-  m_connMon->setAppProtocolState(shallConnect);
   if (!shallConnect)
   {
-    s_mqttClientWrapper->disconnect();
+    if (0 != s_mqttClientWrapper)
+    {
+      s_mqttClientWrapper->disconnect();
+    }
   }
 }
 
@@ -189,9 +219,14 @@ bool MqttClientController::getShallConnect()
   return m_shallConnect;
 }
 
-void MqttClientController::connect()
+bool MqttClientController::connect()
 {
-  s_mqttClientWrapper->connect(WiFi.macAddress().c_str());
+  bool isConnected = false;
+  if (0 != s_mqttClientWrapper)
+  {
+    isConnected = s_mqttClientWrapper->connect(WiFi.macAddress().c_str());
+  }
+  return isConnected;
 }
 
 ConnMon* MqttClientController::connMon()
@@ -206,27 +241,49 @@ DbgTrace_Port* MqttClientController::trPort()
 
 void MqttClientController::loop()
 {
-  if (m_connMon->isAppProtocolConnected())
+  if (0 != m_connMon)
   {
-    bool mqttIsConnected = s_mqttClientWrapper->loop();
-    m_connMon->setAppProtocolState(mqttIsConnected);
+    if (m_connMon->isAppProtocolConnected())
+    {
+      if (0 != s_mqttClientWrapper)
+      {
+        TR_PRINTF(trPort(), DbgTrace_Level::debug, "MqttClientController::loop(), s_mqttClientWrapper->loop()");
+        s_mqttClientWrapper->loop();
+        TR_PRINTF(trPort(), DbgTrace_Level::debug, "MqttClientController::loop(), s_mqttClientWrapper->loop() done");
+      }
+    }
   }
 }
 
 int MqttClientController::publish(const char* topic, const char* data)
 {
-  TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::debug, "publish(%s, %s)\n", topic, data);
-  return s_mqttClientWrapper->publish(topic, data);
+  int ret = 0;
+  if (0 != s_mqttClientWrapper)
+  {
+    TR_PRINTF(m_trPortMqttctrl, DbgTrace_Level::debug, "publish(%s, %s)\n", topic, data);
+    ret = s_mqttClientWrapper->publish(topic, data);
+  }
+  return ret;
 }
 
 int MqttClientController::subscribe(const char* topic)
 {
-  return s_mqttClientWrapper->subscribe(topic);
+  int ret = 0;
+  if (0 != s_mqttClientWrapper)
+  {
+    ret = s_mqttClientWrapper->subscribe(topic);
+  }
+  return ret;
 }
 
 int MqttClientController::unsubscribe(const char* topic)
 {
-  return s_mqttClientWrapper->unsubscribe(topic);
+  int ret = 0;
+  if (0 != s_mqttClientWrapper)
+  {
+    ret = s_mqttClientWrapper->unsubscribe(topic);
+  }
+  return ret;
 }
 
 MqttTopicSubscriber* MqttClientController::mqttSubscriberChain()

@@ -39,7 +39,9 @@ void pubSubClientCallback(char* topic, unsigned char* payload, unsigned int leng
     IMqttClientCallbackAdapter* callbackAdapter = pubSubWrapper->callbackAdapter();
     if (0 != callbackAdapter)
     {
-      callbackAdapter->messageReceived(topic, payload, length);
+      String myTopic(topic);
+      String myPayload(reinterpret_cast<const char*>(payload));
+      callbackAdapter->messageReceived(myTopic.c_str(), myPayload.c_str(), length);
     }
   }
 }
@@ -47,7 +49,10 @@ void pubSubClientCallback(char* topic, unsigned char* payload, unsigned int leng
 void PubSubClientWrapper::setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter)
 {
   m_callbackAdapter = callbackAdapter;
-  m_pubSubClient->setCallback(pubSubClientCallback);
+  if (0 != m_pubSubClient)
+  {
+    m_pubSubClient->setCallback(pubSubClientCallback);
+  }
 }
 
 IMqttClientCallbackAdapter* PubSubClientWrapper::callbackAdapter()
@@ -62,68 +67,116 @@ Client& PubSubClientWrapper::client()
 
 void PubSubClientWrapper::setServer(const char* domain, uint16_t port)
 {
-  m_pubSubClient->setServer(domain, port);
+  if (0 != m_pubSubClient)
+  {
+    m_pubSubClient->setServer(domain, port);
+  }
 }
 
 void PubSubClientWrapper::setClient(Client& client)
 {
-  m_pubSubClient->setClient(client);
+  if (0 != m_pubSubClient)
+  {
+    m_pubSubClient->setClient(client);
+  }
 }
-
 
 bool PubSubClientWrapper::connect(const char* id)
 {
-  return m_pubSubClient->connect(id);
+  bool isConnected = false;
+  if (0 != m_pubSubClient)
+  {
+    isConnected = m_pubSubClient->connect(id);
+  }
+  return isConnected;
 }
 
 void PubSubClientWrapper::disconnect()
 {
-  m_pubSubClient->disconnect();
+  if (0 != m_pubSubClient)
+  {
+    m_pubSubClient->disconnect();
+  }
 }
 
 bool PubSubClientWrapper::connected()
 {
-  return m_pubSubClient->connected();
+  bool isConnected = false;
+  if (0 != m_pubSubClient)
+  {
+    isConnected = m_pubSubClient->connected();
+    yield();
+  }
+  return isConnected;
 }
 
 bool PubSubClientWrapper::loop()
 {
-  return m_pubSubClient->loop();
+  bool isConnected = false;
+  if (0 != m_pubSubClient)
+  {
+    yield();
+    isConnected = m_pubSubClient->loop();
+  }
+  return isConnected;
 }
 
 unsigned char PubSubClientWrapper::publish(const char* topic, const char* data)
 {
-  return m_pubSubClient->publish(topic, data);
+  unsigned char ret = 0;
+  if (0 != m_pubSubClient)
+  {
+    yield();
+    ret = m_pubSubClient->publish(topic, data);
+  }
+  return ret;
 }
 
 unsigned char PubSubClientWrapper::subscribe(const char* topic)
 {
-  return m_pubSubClient->subscribe(topic);
+  unsigned char ret = 0;
+  if (0 != m_pubSubClient)
+  {
+    yield();
+    ret = m_pubSubClient->subscribe(topic);
+  }
+  return ret;
 }
 
 unsigned char PubSubClientWrapper::unsubscribe(const char* topic)
 {
-  return m_pubSubClient->unsubscribe(topic);
+  unsigned char ret = 0;
+  if (0 != m_pubSubClient)
+  {
+    yield();
+    ret = m_pubSubClient->unsubscribe(topic);
+  }
+  return ret;
 }
 
 IMqttClientWrapper::eIMqttClientState PubSubClientWrapper::state()
 {
-  int pubSubClientState = m_pubSubClient->state();
-  eIMqttClientState iMqttClientState = eIMqttCS_Disconnected;
+  eIMqttClientState iMqttClientState = eIMqttCS_ConnectUnavailable;
 
-  switch (pubSubClientState)
+  if (0 != m_pubSubClient)
   {
-    case MQTT_CONNECTION_TIMEOUT       : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionTimeout    ; break;
-    case MQTT_CONNECTION_LOST          : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionLost       ; break;
-    case MQTT_CONNECT_FAILED           : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectFailed        ; break;
-    case MQTT_DISCONNECTED             : iMqttClientState = IMqttClientWrapper::eIMqttCS_Disconnected         ; break;
-    case MQTT_CONNECTED                : iMqttClientState = IMqttClientWrapper::eIMqttCS_Connected            ; break;
-    case MQTT_CONNECT_BAD_PROTOCOL     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadProtocol   ; break;
-    case MQTT_CONNECT_BAD_CLIENT_ID    : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadClientId   ; break;
-    case MQTT_CONNECT_UNAVAILABLE      : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnavailable   ; break;
-    case MQTT_CONNECT_BAD_CREDENTIALS  : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadCredentials; break;
-    case MQTT_CONNECT_UNAUTHORIZED     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnauthorized  ; break;
-    default: break;
+    yield();
+    int pubSubClientState = m_pubSubClient->state();
+
+    switch (pubSubClientState)
+    {
+      case MQTT_CONNECTION_TIMEOUT       : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionTimeout    ; break;
+      case MQTT_CONNECTION_LOST          : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectionLost       ; break;
+      case MQTT_CONNECT_FAILED           : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectFailed        ; break;
+      case MQTT_DISCONNECTED             : iMqttClientState = IMqttClientWrapper::eIMqttCS_Disconnected         ; break;
+      case MQTT_CONNECTED                : iMqttClientState = IMqttClientWrapper::eIMqttCS_Connected            ; break;
+      case MQTT_CONNECT_BAD_PROTOCOL     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadProtocol   ; break;
+      case MQTT_CONNECT_BAD_CLIENT_ID    : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadClientId   ; break;
+      case MQTT_CONNECT_UNAVAILABLE      : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnavailable   ; break;
+      case MQTT_CONNECT_BAD_CREDENTIALS  : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectBadCredentials; break;
+      case MQTT_CONNECT_UNAUTHORIZED     : iMqttClientState = IMqttClientWrapper::eIMqttCS_ConnectUnauthorized  ; break;
+      default: break;
+    }
   }
 
   return iMqttClientState;
@@ -145,7 +198,7 @@ PubSubClientCallbackAdapter::~PubSubClientCallbackAdapter()
   m_trPortMqttRx = 0;
 }
 
-void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* payload, unsigned int length)
+void PubSubClientCallbackAdapter::messageReceived(const char* topic, const char* payload, unsigned int length)
 {
   char msg[length+1];
   memcpy(msg, payload, length);
@@ -153,7 +206,10 @@ void PubSubClientCallbackAdapter::messageReceived(char* topic, unsigned char* pa
 
   TR_PRINTF(m_trPortMqttRx, DbgTrace_Level::info, "Message arrived, topic: %s - msg: %s (len: %d)", topic, msg, length);
 
-  m_rxMsg->prepare(topic, payload, length);
+  if (0 != m_rxMsg)
+  {
+    m_rxMsg->prepare(topic, payload, length);
+  }
 
   MqttTopicSubscriber* mqttSubscriberChain = MqttClientController::Instance()->mqttSubscriberChain();
   if (0 != mqttSubscriberChain)

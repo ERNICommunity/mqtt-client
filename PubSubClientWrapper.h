@@ -60,7 +60,7 @@ private:
 public:
   PubSubClientCallbackAdapter();
   virtual ~PubSubClientCallbackAdapter();
-  void messageReceived(char* topic, unsigned char* payload, unsigned int length);
+  void messageReceived(const char* topic, const char* payload, unsigned int length);
 
 private: // forbidden default functions
   PubSubClientCallbackAdapter& operator = (const PubSubClientCallbackAdapter& src); // assignment operator
