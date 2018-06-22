@@ -414,7 +414,7 @@ DefaultMqttPublisher::DefaultMqttPublisher(const char* topic, const char* data)
 
 void DefaultMqttPublisher::publish(const char* data)
 {
-  TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttPublisher (%s), tx: %s", getTopicString(), getData());
+  TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttPublisher (%s), tx: %s", getTopicString(), data);
   MqttTopicPublisher::publish(data);
 }
 
