@@ -85,6 +85,8 @@ public:
   void publish(const char* data);
   void publish();
 
+  const char* getData() const;
+
   void setNext(MqttTopicPublisher* mqttPublisher);
   MqttTopicPublisher* next();
 
@@ -193,7 +195,8 @@ private:
 class DefaultMqttPublisher : public MqttTopicPublisher
 {
 public:
-  DefaultMqttPublisher(const char* topic);
+  DefaultMqttPublisher(const char* topic, const char* data);
+  void publish(const char* data);
 private:
   DbgTrace_Port* m_trPort;
 private:

@@ -194,6 +194,11 @@ void MqttTopicPublisher::setData(const char* data)
   strncpy(m_data, data, s_maxDataSize);
 }
 
+const char* MqttTopicPublisher::getData() const
+{
+  return m_data;
+}
+
 void MqttTopicPublisher::publish(const char* data)
 {
   int r = 0;
@@ -382,7 +387,7 @@ MqttTopicSubscriber* MqttTopicSubscriber::next()
 
 DefaultMqttSubscriber::DefaultMqttSubscriber(const char* topic)
 : MqttTopicSubscriber(topic)
-, m_trPort(new DbgTrace_Port("mqttdflt", DbgTrace_Level::debug))
+, m_trPort(new DbgTrace_Port("mqttdfltsub", DbgTrace_Level::debug))
 { }
 
 bool DefaultMqttSubscriber::processMessage()
@@ -399,4 +404,19 @@ bool DefaultMqttSubscriber::processMessage()
 
   return msgHasBeenHandled;
 }
+
+//-----------------------------------------------------------------------------
+
+DefaultMqttPublisher::DefaultMqttPublisher(const char* topic, const char* data)
+: MqttTopicPublisher(topic, data)
+, m_trPort(new DbgTrace_Port("mqttdfltpub", DbgTrace_Level::debug))
+{ }
+
+void DefaultMqttPublisher::publish(const char* data)
+{
+  TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttPublisher (%s), tx: %s", getTopicString(), getData());
+  MqttTopicPublisher::publish(data);
+}
+
+
 
