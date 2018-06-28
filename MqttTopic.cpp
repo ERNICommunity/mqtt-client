@@ -271,7 +271,7 @@ void MqttRxMsg::prepare(const char* topic, const char* payload, unsigned int len
 
   delete m_rxTopic;
   m_rxTopic = new MqttTopic(topic);
- }
+}
 
 MqttTopic* MqttRxMsg::getRxTopic() const
 {
