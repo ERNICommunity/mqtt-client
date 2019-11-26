@@ -9,7 +9,6 @@
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #endif
-#include <PubSubClient.h>
 #include <Timer.h>
 #include <DbgCliNode.h>
 #include <DbgCliTopic.h>
@@ -22,8 +21,6 @@
 
 #include <MqttTopic.h>
 #include <ConnectionMonitor.h>
-#include <PubSubClientWrapper.h>
-#include <MqttMockClientWrapper.h>
 #include <MqttClientWrapper.h>
 #include <MqttClientDbgCommand.h>
 #include <MqttClientController.h>
@@ -155,9 +152,7 @@ MqttClientController::MqttClientController()
 #endif
   if (0 != lanClient)
   {
-//    assignMqttClientWrapper(new PubSubClientWrapper(*(lanClient), "iot.eclipse.org"), new PubSubClientCallbackAdapter());
-//    assignMqttClientWrapper(new MqttMockClientWrapper(*(lanClient), "test.mosquitto.org"), new MqttMockClientCallbackAdapter());
-    assignMqttClientWrapper(new MqttClientWrapper(*(lanClient), "test.mosquitto.org"), new MqttClientCallbackAdapter());
+    assignMqttClientWrapper(new MqttClientWrapper(*(lanClient)), new MqttClientCallbackAdapter());
     setShallConnect(true);
   }
 }

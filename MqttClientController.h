@@ -11,7 +11,6 @@
 class Client;
 class IMqttClientWrapper;
 class IMqttClientCallbackAdapter;
-class PubSubClientWrapper;
 class Timer;
 class ConnMon;
 class DbgTrace_Port;

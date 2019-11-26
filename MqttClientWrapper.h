@@ -18,7 +18,7 @@ class MqttRxMsg;
 class MqttClientWrapper: public IMqttClientWrapper
 {
 public:
-  MqttClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort = MqttClientController::defaultMqttPort);
+  MqttClientWrapper(Client& lanClient);
   virtual ~MqttClientWrapper();
 
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
