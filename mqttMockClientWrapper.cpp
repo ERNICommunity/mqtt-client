@@ -19,7 +19,7 @@
 
 IMqttClientWrapper* MqttMockClientWrapper::s_mqttMockClientWrapper = 0;
 
-MqttMockClientWrapper::MqttMockClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
+MqttMockClientWrapper::MqttMockClientWrapper(Client& lanClient)
 : m_client(lanClient)
 , m_callbackAdapter(0)
 , m_isConnected(false)

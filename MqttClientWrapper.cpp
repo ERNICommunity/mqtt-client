@@ -20,7 +20,7 @@
 
 IMqttClientWrapper* MqttClientWrapper::s_mqttClientWrapper = 0;
 
-MqttClientWrapper::MqttClientWrapper(Client& lanClient, const char* mqttServerAddr, unsigned short int mqttPort)
+MqttClientWrapper::MqttClientWrapper(Client& lanClient)
 : m_client(lanClient)
 , m_mqttClient(new MQTTClient(256))
 , m_callbackAdapter(0)
