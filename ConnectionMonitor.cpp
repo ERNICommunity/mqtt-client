@@ -370,7 +370,6 @@ void ConnMonState_AppProtocolConnected::entry(ConnMon* monitor)
 {
   ConnMonState::entry(monitor);
   monitor->adapter()->notifyAppProtocolConnected(true);
-  yield();
 }
 
 const char* ConnMonState_AppProtocolConnected::toString()
