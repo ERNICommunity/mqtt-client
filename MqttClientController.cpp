@@ -8,6 +8,8 @@
 #include <Arduino.h>
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFiClientSecure.h>
 #endif
 #include <Timer.h>
 #include <DbgCliNode.h>
