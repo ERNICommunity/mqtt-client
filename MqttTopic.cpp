@@ -178,8 +178,11 @@ MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool
   MqttClientController::Instance()->addMqttPublisher(this);
   if (m_isAutoPublish)
   {
-    int r = 0;
-    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+    int r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+    if (0 == r)
+    {
+      TR_PRINTF(MqttClientController::Instance()->trPort(), DbgTrace_Level::error, "ERROR! - publish failed");
+    }
   }
 }
 
@@ -201,26 +204,35 @@ const char* MqttTopicPublisher::getData() const
 
 void MqttTopicPublisher::publish(const char* data)
 {
-  int r = 0;
-  r = MqttClientController::Instance()->publish(getTopicString(), data);
+  int r = MqttClientController::Instance()->publish(getTopicString(), data);
+  if (0 == r)
+  {
+    TR_PRINTF(MqttClientController::Instance()->trPort(), DbgTrace_Level::error, "ERROR! - publish failed");
+  }
 }
 
 void MqttTopicPublisher::publish()
 {
-  int r = 0;
-  r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+  int r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+  if (0 == r)
+  {
+    TR_PRINTF(MqttClientController::Instance()->trPort(), DbgTrace_Level::error, "ERROR! - publish failed");
+  }
 }
 
 void MqttTopicPublisher::publishAll()
 {
   if (m_isAutoPublish)
   {
-    int r = 0;
-    r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+    int r = MqttClientController::Instance()->publish(getTopicString(), m_data);
+    if (0 == r)
+    {
+      TR_PRINTF(MqttClientController::Instance()->trPort(), DbgTrace_Level::error, "ERROR! - publish failed");
+    }
+
   }
   if (0 != next())
   {
-    yield();
     next()->publishAll();
   }
 }
@@ -362,7 +374,6 @@ void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortM
   {
     if (0 != next())
     {
-      yield();
       next()->handleMessage(rxMsg, trPortMqttRx);
     }
   }
@@ -374,7 +385,6 @@ void MqttTopicSubscriber::subscribe()
   if (0 != next())
   {
     next()->subscribe();
-    yield();
   }
 }
 
