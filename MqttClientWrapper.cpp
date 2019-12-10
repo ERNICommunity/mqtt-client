@@ -5,17 +5,11 @@
  *      Author: nid
  */
 
-#include <Arduino.h>
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#endif
-
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <MQTT.h>
 #include <MqttTopic.h>
 #include <MqttClientController.h>
-
 #include <MqttClientWrapper.h>
 
 IMqttClientWrapper* MqttClientWrapper::s_mqttClientWrapper = 0;

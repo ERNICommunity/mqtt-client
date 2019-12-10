@@ -5,16 +5,10 @@
  *      Author: nid
  */
 
-#include <Arduino.h>
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#endif
-
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include "MqttTopic.h"
 #include <MqttClientController.h>
-
 #include <MqttMockClientWrapper.h>
 
 IMqttClientWrapper* MqttMockClientWrapper::s_mqttMockClientWrapper = 0;

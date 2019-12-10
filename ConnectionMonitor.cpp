@@ -5,14 +5,14 @@
  *      Author: dini
  */
 
-#include <Arduino.h>
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
+#elif defined(ESP32)
+#include <WiFi.h>
 #endif
 #include <Timer.h>
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
-
 #include <ConnectionMonitor.h>
 
 class StatusPollTimerAdapter : public TimerAdapter
@@ -75,7 +75,7 @@ DbgTrace_Port* ConnMonAdapter::trPort()
 bool ConnMonAdapter::lanConnectedRaw()
 {
   bool isLanConnected = false;
-#ifdef ESP8266
+#if (defined(ESP8266) || defined(ESP32))
   isLanConnected = WiFi.isConnected();
 #endif
   TR_PRINTF(trPort(), DbgTrace_Level::debug, "WiFi device is %sconnected", (isLanConnected ? "" : "dis"));

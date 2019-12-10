@@ -5,11 +5,10 @@
  *      Author: nid
  */
 
-#include <Arduino.h>
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
 #elif defined(ESP32)
-#include <WiFiClientSecure.h>
+#include <WiFi.h>
 #endif
 #include <Timer.h>
 #include <DbgCliNode.h>
@@ -149,7 +148,7 @@ MqttClientController::MqttClientController()
   new DbgCli_Cmd_MqttClientShow(mqttClientTopic, this);
 
   Client* lanClient = 0;
-#ifdef ESP8266
+#if (defined(ESP8266) || defined(ESP32))
   lanClient = new WiFiClient();
 #endif
   if (0 != lanClient)
@@ -175,7 +174,6 @@ void MqttClientController::assignMqttClientWrapper(IMqttClientWrapper* mqttClien
     s_mqttClientWrapper->setCallbackAdapter(mqttClientCallbackAdapter);
   }
 }
-
 
 IMqttClientWrapper* MqttClientController::mqttClientWrapper()
 {

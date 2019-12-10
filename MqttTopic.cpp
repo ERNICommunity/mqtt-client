@@ -5,14 +5,12 @@
  *      Author: nid
  */
 
-#include <MqttTopic.h>
-
-#include <Arduino.h>
 #include <string.h>
 #include <stdio.h>
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <MqttClientController.h>
+#include <MqttTopic.h>
 
 //-----------------------------------------------------------------------------
 
@@ -427,6 +425,3 @@ void DefaultMqttPublisher::publish(const char* data)
   TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttPublisher (%s), tx: %s", getTopicString(), data);
   MqttTopicPublisher::publish(data);
 }
-
-
-
