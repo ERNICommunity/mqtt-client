@@ -8,7 +8,7 @@
 #ifndef LIB_MQTT_CLIENT_CONNECTIONMONITOR_H_
 #define LIB_MQTT_CLIENT_CONNECTIONMONITOR_H_
 
-class Timer;
+class SpinTimer;
 class ConnMonState;
 class DbgTrace_Port;
 
@@ -52,8 +52,8 @@ public:
   void startStableLanConnCheckTimer();
 
 private:
-  Timer* m_statusPollTimer;
-  Timer* m_stableConnCheckTimer;
+  SpinTimer* m_statusPollTimer;
+  SpinTimer* m_stableConnCheckTimer;
   ConnMonAdapter* m_adapter;
   ConnMonState* m_state;
   ConnMonState* m_prevState;

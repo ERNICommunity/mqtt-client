@@ -10,7 +10,6 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #endif
-#include <Timer.h>
 #include <DbgCliNode.h>
 #include <DbgCliTopic.h>
 #include <DbgCliCommand.h>
