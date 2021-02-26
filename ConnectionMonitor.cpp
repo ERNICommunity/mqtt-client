@@ -10,18 +10,18 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #endif
-#include <Timer.h>
+#include <SpinTimer.h>
 #include <DbgTracePort.h>
 #include <DbgTraceLevel.h>
 #include <ConnectionMonitor.h>
 
-class StatusPollTimerAdapter : public TimerAdapter
+class StatusPollTimerAction : public SpinTimerAction
 {
 private:
   ConnMon* m_monitor;
 
 public:
-  StatusPollTimerAdapter(ConnMon* monitor)
+  StatusPollTimerAction(ConnMon* monitor)
   : m_monitor(monitor)
   { }
 
@@ -29,20 +29,20 @@ public:
   {
     if (0 != m_monitor)
     {
-//      Serial.println("conMon.StatusPollTimerAdapter::timeExpired(): calling m_monitor->evaluateState()");
+//      Serial.println("conMon.StatusPollTimerAction::timeExpired(): calling m_monitor->evaluateState()");
       m_monitor->evaluateState();
-//      Serial.println("conMon.StatusPollTimerAdapter::timeExpired(): returned from m_monitor->evaluateState()");
+//      Serial.println("conMon.StatusPollTimerAction::timeExpired(): returned from m_monitor->evaluateState()");
     }
   }
 };
 
-class StableCheckPollTimerAdapter : public TimerAdapter
+class StableCheckPollTimerAction : public SpinTimerAction
 {
 private:
   ConnMon* m_monitor;
 
 public:
-  StableCheckPollTimerAdapter(ConnMon* monitor)
+  StableCheckPollTimerAction(ConnMon* monitor)
   : m_monitor(monitor)
   { }
 
@@ -98,8 +98,8 @@ const unsigned long cStatusPollIntervalMillis  = 2000;
 const unsigned long cStableCheckIntervalMillis = 3000;
 
 ConnMon::ConnMon(ConnMonAdapter* adapter)
-: m_statusPollTimer(new Timer(new StatusPollTimerAdapter(this), Timer::IS_RECURRING, cStatusPollIntervalMillis))
-, m_stableConnCheckTimer(new Timer(new StableCheckPollTimerAdapter(this), Timer::IS_NON_RECURRING, cStableCheckIntervalMillis))
+: m_statusPollTimer(new SpinTimer(cStatusPollIntervalMillis, new StatusPollTimerAction(this), SpinTimer::IS_RECURRING, SpinTimer::IS_AUTOSTART))
+, m_stableConnCheckTimer(new SpinTimer(cStableCheckIntervalMillis, new StableCheckPollTimerAction(this), SpinTimer::IS_NON_RECURRING, SpinTimer::IS_NON_AUTOSTART))
 , m_adapter(adapter)
 , m_state(ConnMonState_Unconnected::Instance())
 , m_prevState(ConnMonState_Unconnected::Instance())
@@ -115,14 +115,14 @@ ConnMon::~ConnMon()
   delete m_adapter;
   m_adapter = 0;
 
-  delete m_statusPollTimer->adapter();
-  m_statusPollTimer->attachAdapter(0);
+  delete m_statusPollTimer->action();
+  m_statusPollTimer->attachAction(0);
 
   delete m_statusPollTimer;
   m_statusPollTimer = 0;
 
-  delete m_stableConnCheckTimer->adapter();
-  m_stableConnCheckTimer->attachAdapter(0);
+  delete m_stableConnCheckTimer->action();
+  m_stableConnCheckTimer->attachAction(0);
 
   delete m_stableConnCheckTimer;
   m_stableConnCheckTimer = 0;
@@ -183,7 +183,7 @@ void ConnMon::evaluateState()
 
 void ConnMon::startStableLanConnCheckTimer()
 {
-  m_stableConnCheckTimer->startTimer(cStableCheckIntervalMillis);
+  m_stableConnCheckTimer->start(cStableCheckIntervalMillis);
 }
 
 void ConnMon::changeState(ConnMonState* newState)
