@@ -303,7 +303,6 @@ const unsigned int MqttRxMsg::getRxMsgSize() const
 MqttTopicSubscriber::MqttTopicSubscriber(const char* topic)
 : MqttTopic(topic)
 , m_next(0)
-, m_rxMsg(0)
 {
   MqttClientController::Instance()->addMqttSubscriber(this);
   MqttClientController::Instance()->subscribe(topic);
@@ -320,17 +319,17 @@ void MqttTopicSubscriber::setNext(MqttTopicSubscriber* mqttSubscriber)
   m_next = mqttSubscriber;
 }
 
-bool MqttTopicSubscriber::isMyTopic() const
+bool MqttTopicSubscriber::isMyTopic(MqttRxMsg* rxMsg) const
 {
   bool ismytopic = false;
-  if ((0 != m_rxMsg) && (0 != m_rxMsg->getRxTopic()))
+  if ((0 != rxMsg) && (0 != rxMsg->getRxTopic()))
   {
     if (hasWildcards())
     {
       // handle smart compare
       bool stillMatch = true;
       TopicLevel* subscriberTopicLevel = getLevelList();
-      TopicLevel* rxTopicLevel = m_rxMsg->getRxTopic()->getLevelList();
+      TopicLevel* rxTopicLevel = rxMsg->getRxTopic()->getLevelList();
       while(stillMatch && (0 != subscriberTopicLevel) && (0 != rxTopicLevel))
       {
         if (TopicLevel::eTWC_None == subscriberTopicLevel->getWildcardType())
@@ -344,7 +343,7 @@ bool MqttTopicSubscriber::isMyTopic() const
     }
     else
     {
-      if (strcmp(getTopicString(), m_rxMsg->getRxTopic()->getTopicString()) == 0)
+      if (strcmp(getTopicString(), rxMsg->getRxTopic()->getTopicString()) == 0)
       {
         ismytopic = true;
       }
@@ -353,21 +352,20 @@ bool MqttTopicSubscriber::isMyTopic() const
   return ismytopic;
 }
 
-MqttRxMsg* MqttTopicSubscriber::getRxMsg() const
-{
-  return m_rxMsg;
-}
-
-
 void MqttTopicSubscriber::handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortMqttRx)
 {
-  m_rxMsg = rxMsg;
-  if ((0 != trPortMqttRx) && (0 != m_rxMsg) && (0 != m_rxMsg->getRxTopic()))
+  if ((0 != trPortMqttRx) && (0 != rxMsg) && (0 != rxMsg->getRxTopic()))
   {
-    TR_PRINTF(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: %s, rx topic: %s, rx msg: %s", getTopicString(), m_rxMsg->getRxTopic()->getTopicString(), m_rxMsg->getRxMsgString());
+    TR_PRINTF(trPortMqttRx, DbgTrace_Level::debug, "MqttTopicSubscriber::handleMessage(), topic: %s, rx topic: %s, rx msg: %s", getTopicString(), rxMsg->getRxTopic()->getTopicString(), rxMsg->getRxMsgString());
   }
 
-  bool msgHasBeenHandled = processMessage();
+  bool msgHasBeenHandled = false;
+  if (isMyTopic(rxMsg))
+  {
+    // take responsibility
+    msgHasBeenHandled = processMessage(rxMsg);
+  }
+
   if (!msgHasBeenHandled)
   {
     if (0 != next())
@@ -398,14 +396,12 @@ DefaultMqttSubscriber::DefaultMqttSubscriber(const char* topic)
 , m_trPort(new DbgTrace_Port("mqttdfltsub", DbgTrace_Level::debug))
 { }
 
-bool DefaultMqttSubscriber::processMessage()
+bool DefaultMqttSubscriber::processMessage(MqttRxMsg* rxMsg)
 {
   bool msgHasBeenHandled = false;
-  MqttRxMsg* rxMsg = getRxMsg();
 
-  if (isMyTopic() && (0 != rxMsg))
+  if (0 != rxMsg)
   {
-    // take responsibility
     msgHasBeenHandled = true;
     TR_PRINTF(m_trPort, DbgTrace_Level::debug, "DefaultMqttSubscriber (%s), rx: [%s] %s", getTopicString(), rxMsg->getRxTopic()->getTopicString(), rxMsg->getRxMsgString());
   }

@@ -150,16 +150,14 @@ public:
   virtual ~MqttTopicSubscriber();
 
   void handleMessage(MqttRxMsg* rxMsg, DbgTrace_Port* trPortMqttRx = 0);
-  virtual bool processMessage() = 0;
-  bool isMyTopic() const;
+  virtual bool processMessage(MqttRxMsg* rxMsg) = 0;
+  bool isMyTopic(MqttRxMsg* rxMsg) const;
   void subscribe();
   void setNext(MqttTopicSubscriber* mqttSubscriber);
   MqttTopicSubscriber* next();
-  MqttRxMsg* getRxMsg() const;
 
 private:
   MqttTopicSubscriber* m_next;
-  MqttRxMsg* m_rxMsg;
 
 private:
   // forbidden default functions
@@ -177,7 +175,7 @@ class DefaultMqttSubscriber : public MqttTopicSubscriber
 {
 public:
   DefaultMqttSubscriber(const char* topic);
-  virtual bool processMessage();
+  virtual bool processMessage(MqttRxMsg* rxMsg);
 private:
   DbgTrace_Port* m_trPort;
 private:
