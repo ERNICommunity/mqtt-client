@@ -187,6 +187,9 @@ MqttTopicPublisher::MqttTopicPublisher(const char* topic, const char* data, bool
 MqttTopicPublisher::~MqttTopicPublisher()
 {
   MqttClientController::Instance()->deletePublisher(this);
+  
+  delete [] m_data;
+  m_data = 0;
 }
 
 void MqttTopicPublisher::setData(const char* data)
