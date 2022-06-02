@@ -22,6 +22,13 @@
 SerialCommand* sCmd = 0;
 
 //-----------------------------------------------------------------------------
+// ESP8266 / ESP32 WiFi Client
+//-----------------------------------------------------------------------------
+#if defined(ESP8266) || defined(ESP32)
+WiFiClient wifiClient;
+#endif
+
+//-----------------------------------------------------------------------------
 
 void setBuiltInLed(bool state)
 {
@@ -273,7 +280,7 @@ void setup()
   //-----------------------------------------------------------------------------
   // MQTT Client
   //-----------------------------------------------------------------------------
-  ECMqttClient.begin(MQTT_SERVER);
+  ECMqttClient.begin(MQTT_SERVER, ECMqttClientClass::defaultMqttPort, wifiClient, WiFi.macAddress().c_str());
   new TestLedMqttSubscriber();
 }
 

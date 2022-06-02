@@ -37,10 +37,7 @@ public:
 
   virtual IMqttClientCallbackAdapter* callbackAdapter() = 0;
 
-  virtual Client& client() = 0;
-
-  virtual void setServer(const char* domain, uint16_t port) = 0;
-  virtual void setClient(Client& client) = 0;
+  virtual void begin(const char* domain, uint16_t port, Client& client) = 0;
 
   /**
    * Process MQTT messages.

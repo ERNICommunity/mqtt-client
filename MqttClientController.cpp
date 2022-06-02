@@ -5,11 +5,11 @@
  *      Author: nid
  */
 
-#ifdef ESP8266
-#include <ESP8266WiFi.h>
-#elif defined(ESP32)
-#include <WiFi.h>
-#endif
+#include <string.h>
+#include <stdio.h>
+
+#include <Client.h>
+
 #include <DbgCliNode.h>
 #include <DbgCliTopic.h>
 #include <DbgCliCommand.h>
@@ -65,7 +65,7 @@ public:
     bool isConnected = false;
     if (0 != m_mqttClientCtrl)
     {
-      TR_PRINTF(trPort(), DbgTrace_Level::error, "actionConnectAppProtocol()");
+      TR_PRINTF(trPort(), DbgTrace_Level::error, "actionConnectAppProtocol(), connect with id: %s", m_mqttClientCtrl->id());
       isConnected = m_mqttClientCtrl->connect();
       TR_PRINTF(trPort(), DbgTrace_Level::error, "actionConnectAppProtocol() done - MQTT client %s; %s",
           isConnected ? "connected" : "NOT connected",
@@ -120,7 +120,7 @@ public:
 
 MqttClientController* MqttClientController::s_instance = 0;
 IMqttClientWrapper* MqttClientController::s_mqttClientWrapper = 0;
-const unsigned short int MqttClientController::defaultMqttPort = 1883;
+const unsigned int MqttClientController::s_maxIdSize = sizeof("AB:CD:EF:01:23:45");
 
 MqttClientController* MqttClientController::Instance()
 {
@@ -137,6 +137,7 @@ MqttClientController::MqttClientController()
 , m_connMon(new ConnMon(new MyConnMonAdapter(this)))
 , m_mqttSubscriberChain(0)
 , m_mqttPublisherChain(0)
+, m_id(new char[s_maxIdSize+1])
 {
   DbgCli_Topic* mqttClientTopic = new DbgCli_Topic(DbgCli_Node::RootNode(), "mqtt", "MQTT Client debug commands");
   new DbgCli_Cmd_MqttClientCon(mqttClientTopic, this);
@@ -146,22 +147,19 @@ MqttClientController::MqttClientController()
   new DbgCli_Cmd_MqttClientUnsub(mqttClientTopic, this);
   new DbgCli_Cmd_MqttClientShow(mqttClientTopic, this);
 
-  Client* lanClient = 0;
-#if (defined(ESP8266) || defined(ESP32))
-  lanClient = new WiFiClient();
-#endif
-  if (0 != lanClient)
-  {
-    assignMqttClientWrapper(new MqttClientWrapper(*(lanClient)), new MqttClientCallbackAdapter());
-    setShallConnect(true);
-  }
+  assignMqttClientWrapper(new MqttClientWrapper(), new MqttClientCallbackAdapter());
+  setShallConnect(true);
 }
 
 MqttClientController::~MqttClientController()
 {
+  delete [] m_id;
+  m_id = 0;
+
   delete m_connMon->adapter();
   delete m_connMon;
   m_connMon = 0;
+  
   setShallConnect(false);
 }
 
@@ -179,22 +177,16 @@ IMqttClientWrapper* MqttClientController::mqttClientWrapper()
   return s_mqttClientWrapper;
 }
 
-void MqttClientController::setServer(const char* domain, uint16_t port)
+void MqttClientController::begin(const char* domain, uint16_t port, Client& client, const char* id)
 {
+  memset(m_id, 0, s_maxIdSize+1);
+  strncpy(m_id, id, s_maxIdSize); 
+
   if (0 != s_mqttClientWrapper)
   {
-    s_mqttClientWrapper->setServer(domain, port);
+    s_mqttClientWrapper->begin(domain, port, client);
   }
 }
-
-void MqttClientController::setClient(Client& client)
-{
-  if (0 != s_mqttClientWrapper)
-  {
-    s_mqttClientWrapper->setClient(client);
-  }
-}
-
 
 void MqttClientController::setShallConnect(bool shallConnect)
 {
@@ -218,7 +210,7 @@ bool MqttClientController::connect()
   bool isConnected = false;
   if (0 != s_mqttClientWrapper)
   {
-    isConnected = s_mqttClientWrapper->connect(WiFi.macAddress().c_str());
+    isConnected = s_mqttClientWrapper->connect(m_id);
   }
   return isConnected;
 }
@@ -231,6 +223,11 @@ ConnMon* MqttClientController::connMon()
 DbgTrace_Port* MqttClientController::trPort()
 {
   return m_trPortMqttctrl;
+}
+
+const char* MqttClientController::id()
+{
+  return m_id;
 }
 
 void MqttClientController::loop()

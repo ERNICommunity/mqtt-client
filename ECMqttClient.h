@@ -8,13 +8,16 @@
 #ifndef LIB_MQTT_CLIENT_MODEL_ERNICOMMUNITYMQTTCLIENT_H_
 #define LIB_MQTT_CLIENT_MODEL_ERNICOMMUNITYMQTTCLIENT_H_
 
+class Client;
+
 class ECMqttClientClass
 {
 public:
   static const unsigned short int defaultMqttPort;
+  static const unsigned short int defaultSecureMqttPort;
   ECMqttClientClass() { }
   virtual ~ECMqttClientClass() { }
-  void begin(const char* address, unsigned short int port = defaultMqttPort);
+  void begin(const char* address, unsigned short int port, Client& client, const char* id);
   void loop();
 
 private: // forbidden default functions

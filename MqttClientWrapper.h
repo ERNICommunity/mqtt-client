@@ -18,14 +18,12 @@ class MqttRxMsg;
 class MqttClientWrapper: public IMqttClientWrapper
 {
 public:
-  MqttClientWrapper(Client& lanClient);
+  MqttClientWrapper();
   virtual ~MqttClientWrapper();
 
   void setCallbackAdapter(IMqttClientCallbackAdapter* callbackAdapter);
   IMqttClientCallbackAdapter* callbackAdapter();
-  Client& client();
-  void setServer(const char* domain, uint16_t port=MqttClientController::defaultMqttPort);
-  void setClient(Client& client);
+  void begin(const char* domain, uint16_t port, Client& client);
   bool loop();
   bool connect(const char* id);
   void disconnect();
@@ -40,12 +38,10 @@ public:
   static void (*callback)(char*, uint8_t*, unsigned int);
 
 private:
-  Client& m_client;
   MQTTClient* m_mqttClient;
   IMqttClientCallbackAdapter* m_callbackAdapter;
 
 private: // forbidden default functions
-  MqttClientWrapper();                                          // default constructor
   MqttClientWrapper& operator = (const MqttClientWrapper& src); // assignment operator
   MqttClientWrapper(const MqttClientWrapper& src);              // copy constructor
 };

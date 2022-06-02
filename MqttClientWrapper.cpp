@@ -14,9 +14,8 @@
 
 IMqttClientWrapper* MqttClientWrapper::s_mqttClientWrapper = 0;
 
-MqttClientWrapper::MqttClientWrapper(Client& lanClient)
-: m_client(lanClient)
-, m_mqttClient(new MQTTClient(256))
+MqttClientWrapper::MqttClientWrapper()
+: m_mqttClient(new MQTTClient(512))
 , m_callbackAdapter(0)
 {
   s_mqttClientWrapper = this;
@@ -53,21 +52,13 @@ IMqttClientCallbackAdapter* MqttClientWrapper::callbackAdapter()
   return m_callbackAdapter;
 }
 
-Client& MqttClientWrapper::client()
-{
-  return m_client;
-}
-
-void MqttClientWrapper::setServer(const char* domain, uint16_t port)
+void MqttClientWrapper::begin(const char* domain, uint16_t port, Client& client)
 {
   if (0 != m_mqttClient)
   {
-    m_mqttClient->begin(domain, port, m_client);
+    m_mqttClient->begin(domain, port, client);
   }
 }
-
-void MqttClientWrapper::setClient(Client& client)
-{ }
 
 bool MqttClientWrapper::connect(const char* id)
 {

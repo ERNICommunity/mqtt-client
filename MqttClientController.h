@@ -33,8 +33,7 @@ public:
   static void assignMqttClientWrapper(IMqttClientWrapper* mqttClientWrapper, IMqttClientCallbackAdapter* mqttClientCallbackAdapter);
   static IMqttClientWrapper* mqttClientWrapper();
 
-  void setServer(const char* domain, unsigned short int port=defaultMqttPort);
-  void setClient(Client& client);
+  void begin(const char* domain, unsigned short int port, Client& client, const char* id);
 
   void setShallConnect(bool shallConnect);
   bool getShallConnect();
@@ -51,6 +50,7 @@ public:
 
   ConnMon* connMon();
   DbgTrace_Port* trPort();
+  const char* id();
 
   MqttTopicSubscriber* mqttSubscriberChain();
   MqttTopicPublisher* mqttPublisherChain();
@@ -64,18 +64,17 @@ protected:
   void addMqttSubscriber(MqttTopicSubscriber* mqttSubscriber);
   void addMqttPublisher(MqttTopicPublisher* mqttPublisher);
 
-public:
-  static const unsigned short int defaultMqttPort;
-
 private:
   static MqttClientController* s_instance;
-  static IMqttClientWrapper*   s_mqttClientWrapper;
+  static IMqttClientWrapper* s_mqttClientWrapper;
+  static const unsigned int s_maxIdSize;
 
   bool m_shallConnect;
   DbgTrace_Port* m_trPortMqttctrl;
   ConnMon* m_connMon;
   MqttTopicSubscriber* m_mqttSubscriberChain;
   MqttTopicPublisher* m_mqttPublisherChain;
+  char* m_id;
 
 private: // forbidden default functions
   MqttClientController& operator = (const MqttClientController& src); // assignment operator

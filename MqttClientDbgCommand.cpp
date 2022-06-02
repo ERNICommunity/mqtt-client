@@ -13,6 +13,7 @@
 #include <DbgPrintConsole.h>
 #include <DbgTraceOut.h>
 
+#include <IMqttClientWrapper.h>
 #include <MqttClientController.h>
 #include <MqttClientDbgCommand.h>
 #include <ConnectionMonitor.h>
@@ -36,8 +37,15 @@ void DbgCli_Cmd_MqttClientCon::execute(unsigned int argc, const char** args, uns
   {
     if (0 != m_mqttClient)
     {
-      m_mqttClient->setShallConnect(true);
-      TR_PRINTF(m_mqttClient->trPort(), DbgTrace_Level::alert, "MQTT client connecting to broker now.");
+      if (m_mqttClient->mqttClientWrapper()->connected())
+      {
+        TR_PRINTF(m_mqttClient->trPort(), DbgTrace_Level::alert, "MQTT client is already connected to broker.");
+      }
+      else
+      {
+        TR_PRINTF(m_mqttClient->trPort(), DbgTrace_Level::alert, "MQTT client connecting to broker now.");
+        m_mqttClient->setShallConnect(true);
+      }
     }
   }
 }
